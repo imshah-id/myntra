@@ -1,27 +1,33 @@
 import { Link, Stack } from "expo-router";
 import React from "react";
-import { StyleSheet, Text, View, Pressable } from "react-native";
+import { StyleSheet } from "react-native";
+import { ThemedView } from "@/components/ThemedView";
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedButton } from "@/components/ThemedButton";
+import { AlertTriangle } from "lucide-react-native";
+import { useTheme } from "@/hooks/useTheme";
 
 export default function NotFoundScreen() {
+  const { theme } = useTheme();
+
   return (
     <>
-      <Stack.Screen options={{ title: "404" }} />
+      <Stack.Screen options={{ title: "Oops!" }} />
+      <ThemedView style={styles.container}>
+        <AlertTriangle size={64} color={theme.primary} style={styles.icon} />
 
-      <View style={styles.container}>
-        <Text style={styles.emoji}>😵‍💫</Text>
+        <ThemedText type="title" style={styles.title}>
+          Page Not Found
+        </ThemedText>
 
-        <Text style={styles.title}>Page Not Found</Text>
-
-        <Text style={styles.subtitle}>
-          The page you’re looking for doesn’t exist or was moved.
-        </Text>
+        <ThemedText style={styles.subtitle}>
+          The page you’re looking for doesn’t exist or has been moved.
+        </ThemedText>
 
         <Link href="/" asChild>
-          <Pressable style={styles.button}>
-            <Text style={styles.buttonText}>Go Home</Text>
-          </Pressable>
+          <ThemedButton title="Go to Home" onPress={() => {}} />
         </Link>
-      </View>
+      </ThemedView>
     </>
   );
 }
@@ -32,34 +38,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: 24,
-    backgroundColor: "#fff",
   },
-  emoji: {
-    fontSize: 56,
-    marginBottom: 16,
+  icon: {
+    marginBottom: 24,
   },
   title: {
-    fontSize: 26,
-    fontWeight: "700",
-    marginBottom: 8,
-    color: "#111",
+    marginBottom: 12,
+    textAlign: "center",
   },
   subtitle: {
-    fontSize: 16,
+    marginBottom: 32,
     textAlign: "center",
-    color: "#666",
-    marginBottom: 28,
-    maxWidth: 320,
-  },
-  button: {
-    backgroundColor: "#111",
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 10,
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
+    opacity: 0.7,
   },
 });
