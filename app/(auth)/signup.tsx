@@ -93,6 +93,8 @@ export default function Signup() {
         setisloading(false);
       }
       router.replace("/(tabs)");
+    } else {
+      showAlert("Signup Failed", "Please fill in all fields correctly.");
     }
   };
 

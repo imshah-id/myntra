@@ -41,6 +41,11 @@ export default function Login() {
     setAlertConfig({ ...alertConfig, visible: false });
   };
   const handleLogin = async () => {
+    if (!email || !password) {
+      showAlert("Login Failed", "Please fill in all fields.");
+      return;
+    }
+
     try {
       setisloading(true);
       await login(email, password);
