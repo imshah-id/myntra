@@ -12,6 +12,8 @@ import { ShoppingBag, Minus, Plus, Trash2 } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import axios from "axios";
+import { useTheme } from "@/hooks/useTheme";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const bagItems = [
   {
@@ -38,6 +40,8 @@ const bagItems = [
 
 export default function Bag() {
   const router = useRouter();
+  const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
 
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
@@ -45,7 +49,6 @@ export default function Bag() {
   useEffect(() => {
     // Simulate loading time
 
-    
     fetchproduct();
   }, [user]);
   const fetchproduct = async () => {
@@ -66,18 +69,33 @@ export default function Bag() {
   };
   if (!user) {
     return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Shopping Bag</Text>
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <View
+          style={[
+            styles.header,
+            {
+              backgroundColor: theme.background,
+              borderBottomColor: theme.border,
+              paddingTop: insets.top + 10,
+            },
+          ]}
+        >
+          <Text style={[styles.headerTitle, { color: theme.text }]}>
+            Shopping Bag
+          </Text>
         </View>
         <View style={styles.emptyState}>
-          <ShoppingBag size={64} color="#ff3f6c" />
-          <Text style={styles.emptyTitle}>Please login to view your bag</Text>
+          <ShoppingBag size={64} color={theme.tint} />
+          <Text style={[styles.emptyTitle, { color: theme.text }]}>
+            Please login to view your bag
+          </Text>
           <TouchableOpacity
-            style={styles.loginButton}
+            style={[styles.loginButton, { backgroundColor: theme.tint }]}
             onPress={() => router.push("/login")}
           >
-            <Text style={styles.loginButtonText}>LOGIN</Text>
+            <Text style={[styles.loginButtonText, { color: theme.background }]}>
+              LOGIN
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -92,48 +110,87 @@ export default function Bag() {
   }
   const total = bag?.reduce(
     (sum: any, item: any) => sum + item.productId.price * item.quantity,
-    0
+    0,
   );
-  const handledelete=async(itemid:any)=>{
+  const handledelete = async (itemid: any) => {
     try {
       await axios.delete(
         `https://myntrabackend-eal6.onrender.com/bag/${itemid}`,
       );
       fetchproduct();
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
-   
-  }
+  };
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Shopping Bag</Text>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <View
+        style={[
+          styles.header,
+          {
+            backgroundColor: theme.background,
+            borderBottomColor: theme.border,
+            paddingTop: insets.top + 10,
+          },
+        ]}
+      >
+        <Text style={[styles.headerTitle, { color: theme.text }]}>
+          Shopping Bag
+        </Text>
       </View>
 
       <ScrollView style={styles.content}>
         {bag?.map((item: any) => (
-          <View key={item._id} style={styles.bagItem}>
+          <View
+            key={item._id}
+            style={[
+              styles.bagItem,
+              { backgroundColor: theme.surface, shadowColor: theme.icon },
+            ]}
+          >
             <Image
               source={{ uri: item.productId.images[0] }}
               style={styles.itemImage}
             />
             <View style={styles.itemInfo}>
-              <Text style={styles.brandName}>{item.productId.brand}</Text>
-              <Text style={styles.itemName}>{item.productId.name}</Text>
-              <Text style={styles.itemSize}>Size: {item.size}</Text>
-              <Text style={styles.itemPrice}>₹{item.productId.price}</Text>
+              <Text style={[styles.brandName, { color: theme.icon }]}>
+                {item.productId.brand}
+              </Text>
+              <Text style={[styles.itemName, { color: theme.text }]}>
+                {item.productId.name}
+              </Text>
+              <Text style={[styles.itemSize, { color: theme.icon }]}>
+                Size: {item.size}
+              </Text>
+              <Text style={[styles.itemPrice, { color: theme.text }]}>
+                ₹{item.productId.price}
+              </Text>
 
               <View style={styles.quantityContainer}>
-                <TouchableOpacity style={styles.quantityButton}>
-                  <Minus size={20} color="#3e3e3e" />
+                <TouchableOpacity
+                  style={[
+                    styles.quantityButton,
+                    { backgroundColor: theme.background },
+                  ]}
+                >
+                  <Minus size={20} color={theme.text} />
                 </TouchableOpacity>
-                <Text style={styles.quantity}>{item.quantity}</Text>
-                <TouchableOpacity style={styles.quantityButton}>
-                  <Plus size={20} color="#3e3e3e" />
+                <Text style={[styles.quantity, { color: theme.text }]}>
+                  {item.quantity}
+                </Text>
+                <TouchableOpacity
+                  style={[
+                    styles.quantityButton,
+                    { backgroundColor: theme.background },
+                  ]}
+                >
+                  <Plus size={20} color={theme.text} />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.removeButton} onPress={()=>handledelete(item._id)}>
-                  <Trash2 size={20} color="#ff3f6c" />
+                <TouchableOpacity
+                  style={styles.removeButton}
+                  onPress={() => handledelete(item._id)}
+                >
+                  <Trash2 size={20} color={theme.tint} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -141,10 +198,19 @@ export default function Bag() {
         ))}
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View
+        style={[
+          styles.footer,
+          { backgroundColor: theme.background, borderTopColor: theme.border },
+        ]}
+      >
         <View style={styles.totalContainer}>
-          <Text style={styles.totalLabel}>Total Amount</Text>
-          <Text style={styles.totalAmount}>₹{total}</Text>
+          <Text style={[styles.totalLabel, { color: theme.text }]}>
+            Total Amount
+          </Text>
+          <Text style={[styles.totalAmount, { color: theme.text }]}>
+            ₹{total}
+          </Text>
         </View>
         <TouchableOpacity
           style={styles.checkoutButton}
@@ -170,7 +236,7 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 15,
-    paddingTop: 50,
+    // paddingTop: 50,
     backgroundColor: "#fff",
     borderBottomWidth: 1,
     borderBottomColor: "#f0f0f0",

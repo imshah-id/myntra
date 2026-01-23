@@ -31,41 +31,57 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const login = async (email: string, password: string) => {
-    // 👉 Replace with your real API URL
-    const res = await axios.post(
-      "https://myntrabackend-eal6.onrender.com/user/login",
-      {
-        email,
-        password,
-      },
-    );
+    try {
+      const res = await axios.post(
+        "https://myntrabackend-eal6.onrender.com/user/login",
+        {
+          email,
+          password,
+        },
+      );
 
-    const data = await res.data.user;
-    if (data.fullName) {
-      await saveUserData(data._id, data.fullName, data.email);
-      setUser({ _id: data._id, name: data.name, email: data.email });
-      setIsAuthenticated(true);
-    } else {
-      throw new Error(data.message || "Login failed");
+      const data = await res.data.user;
+      if (data.fullName) {
+        await saveUserData(data._id, data.fullName, data.email);
+        setUser({ _id: data._id, name: data.name, email: data.email });
+        setIsAuthenticated(true);
+      } else {
+        throw new Error(data.message || "Login failed");
+      }
+    } catch (error: any) {
+      console.error("Login Error:", error);
+      throw new Error(
+        error.response?.data?.message ||
+          error.message ||
+          "Login failed. Please check your network or credentials.",
+      );
     }
   };
   const Signup = async (fullName: string, email: string, password: string) => {
-    // 👉 Replace with your real API URL
-    const res = await axios.post(
-      "https://myntrabackend-eal6.onrender.com/user/signup",
-      {
-        fullName,
-        email,
-        password,
-      },
-    );
-    const data = await res.data.user;
-    if (data.fullName) {
-      await saveUserData(data._id, data.fullName, data.email);
-      setUser({ _id: data._id, name: data.name, email: data.email });
-      setIsAuthenticated(true);
-    } else {
-      throw new Error(data.message || "Login failed");
+    try {
+      const res = await axios.post(
+        "https://myntrabackend-eal6.onrender.com/user/signup",
+        {
+          fullName,
+          email,
+          password,
+        },
+      );
+      const data = await res.data.user;
+      if (data.fullName) {
+        await saveUserData(data._id, data.fullName, data.email);
+        setUser({ _id: data._id, name: data.name, email: data.email });
+        setIsAuthenticated(true);
+      } else {
+        throw new Error(data.message || "Signup failed");
+      }
+    } catch (error: any) {
+      console.error("Signup Error:", error);
+      throw new Error(
+        error.response?.data?.message ||
+          error.message ||
+          "Signup failed. Please try again later.",
+      );
     }
   };
   const logout = async () => {

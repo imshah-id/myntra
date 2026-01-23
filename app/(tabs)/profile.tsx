@@ -4,6 +4,7 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  SafeAreaView,
 } from "react-native";
 import { useRouter } from "expo-router";
 import {
@@ -18,6 +19,8 @@ import {
 } from "lucide-react-native";
 import React from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useTheme } from "../../hooks/useTheme";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const menuItems = [
   { icon: Package, label: "Orders", route: "/orders" },
@@ -26,26 +29,41 @@ const menuItems = [
   { icon: MapPin, label: "Addresses", route: "/addresses" },
   { icon: Settings, label: "Settings", route: "/settings" },
 ];
-
 export default function Profile() {
   const router = useRouter();
   const { user, logout } = useAuth();
+  const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
+
   const handleLogout = () => {
-    logout()
+    logout();
     router.replace("/");
   };
 
   if (!user) {
     return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Profile</Text>
+      <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
+        <View
+          style={[
+            styles.header,
+            {
+              backgroundColor: theme.background,
+              borderBottomColor: theme.icon,
+              paddingTop: insets.top + 10,
+            },
+          ]}
+        >
+          <Text style={[styles.headerTitle, { color: theme.text }]}>
+            Profile
+          </Text>
         </View>
+
         <View style={styles.emptyState}>
-          <User size={64} color="#ff3f6c" />
-          <Text style={styles.emptyTitle}>
+          <User size={64} color={theme.tint} />
+          <Text style={[styles.emptyTitle, { color: theme.text }]}>
             Please login to view your profile
           </Text>
+
           <TouchableOpacity
             style={styles.loginButton}
             onPress={() => router.push("/login")}
@@ -53,68 +71,92 @@ export default function Profile() {
             <Text style={styles.loginButtonText}>LOGIN</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Profile</Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
+      {/* HEADER */}
+      <View
+        style={[
+          styles.header,
+          {
+            backgroundColor: theme.background,
+            borderBottomColor: theme.icon,
+            paddingTop: insets.top + 10,
+          },
+        ]}
+      >
+        <Text style={[styles.headerTitle, { color: theme.text }]}>Profile</Text>
       </View>
 
-      <ScrollView style={styles.content}>
+      {/* CONTENT */}
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ backgroundColor: theme.background }}
+      >
+        {/* USER INFO */}
         <View style={styles.userInfo}>
           <View style={styles.avatar}>
             <User size={40} color="#fff" />
           </View>
+
           <View style={styles.userDetails}>
-            <Text style={styles.userName}>{user.name}</Text>
-            <Text style={styles.userEmail}>{user.email}</Text>
+            <Text style={[styles.userName, { color: theme.text }]}>
+              {user.name}
+            </Text>
+            <Text style={[styles.userEmail, { color: theme.icon }]}>
+              {user.email}
+            </Text>
           </View>
         </View>
 
+        {/* MENU */}
         <View style={styles.menuSection}>
           {menuItems.map((item, index) => (
             <TouchableOpacity
               key={index}
-              style={styles.menuItem}
+              style={[styles.menuItem, { borderBottomColor: theme.icon }]}
               onPress={() => router.push(item.route as any)}
             >
               <View style={styles.menuItemLeft}>
-                <item.icon size={24} color="#3e3e3e" />
-                <Text style={styles.menuItemLabel}>{item.label}</Text>
+                <item.icon size={24} color={theme.text} />
+                <Text style={[styles.menuItemLabel, { color: theme.text }]}>
+                  {item.label}
+                </Text>
               </View>
-              <ChevronRight size={24} color="#3e3e3e" />
+
+              <ChevronRight size={24} color={theme.icon} />
             </TouchableOpacity>
           ))}
         </View>
 
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <LogOut size={24} color="#ff3f6c" />
+        {/* LOGOUT */}
+        <TouchableOpacity
+          style={[styles.logoutButton, { borderColor: theme.tint }]}
+          onPress={handleLogout}
+        >
+          <LogOut size={24} color={theme.tint} />
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   header: {
     padding: 15,
-    paddingTop: 50,
-    backgroundColor: "#fff",
+    // paddingTop: 50,
     borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#3e3e3e",
   },
   content: {
     flex: 1,
@@ -127,7 +169,6 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 18,
-    color: "#3e3e3e",
     marginTop: 20,
     marginBottom: 20,
   },
@@ -146,7 +187,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 20,
-    backgroundColor: "#fff",
   },
   avatar: {
     width: 80,
@@ -162,12 +202,10 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#3e3e3e",
     marginBottom: 5,
   },
   userEmail: {
     fontSize: 14,
-    color: "#666",
   },
   menuSection: {
     marginTop: 20,
@@ -177,9 +215,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     padding: 15,
-    backgroundColor: "#fff",
     borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
   },
   menuItemLeft: {
     flexDirection: "row",
@@ -187,7 +223,6 @@ const styles = StyleSheet.create({
   },
   menuItemLabel: {
     fontSize: 16,
-    color: "#3e3e3e",
     marginLeft: 15,
   },
   logoutButton: {
@@ -198,9 +233,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginHorizontal: 15,
     borderRadius: 10,
-    backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: "#ff3f6c",
   },
   logoutText: {
     marginLeft: 10,

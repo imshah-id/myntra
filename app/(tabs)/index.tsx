@@ -8,10 +8,12 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { Search, ChevronRight } from "lucide-react-native";
+import { Search, ChevronRight, Sun, Moon } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import axios from "axios";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTheme } from "../../hooks/useTheme";
 
 const deals = [
   {
@@ -34,6 +36,8 @@ export default function Home() {
   const [product, setproduct] = useState<any>(null);
   const [categories, setcategories] = useState<any>(null);
   const { user } = useAuth();
+  const { theme, colorScheme, toggleTheme } = useTheme();
+  const insets = useSafeAreaInsets();
   const handleProductPress = (productId: number) => {
     if (!user) {
       router.push("/login");
@@ -63,14 +67,46 @@ export default function Home() {
     fetchproduct();
   }, []);
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.logo}>MYNTRA</Text>
-        <TouchableOpacity style={styles.searchButton}>
-          <Search size={24} color="#3e3e3e" />
-        </TouchableOpacity>
+    <ScrollView
+      style={{ flex: 1 }}
+      contentContainerStyle={[
+        styles.container,
+        { backgroundColor: theme.background },
+      ]}
+    >
+      {/* HEADER */}
+      <View
+        style={[
+          styles.header,
+          {
+            backgroundColor: theme.background,
+            borderBottomColor: theme.icon,
+            paddingTop: insets.top + 10,
+          },
+        ]}
+      >
+        <Text style={[styles.logo, { color: theme.text }]}>MYNTRA</Text>
+
+        <View style={styles.actions}>
+          <TouchableOpacity style={styles.iconButton}>
+            <Search size={22} color={theme.icon} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={toggleTheme}
+            activeOpacity={0.7}
+          >
+            {colorScheme === "dark" ? (
+              <Sun size={22} color={theme.tint} />
+            ) : (
+              <Moon size={22} color={theme.tint} />
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
 
+      {/* BANNER */}
       <Image
         source={{
           uri: "https://images.unsplash.com/photo-1445205170230-053b83016050?w=800&auto=format&fit=crop",
@@ -78,27 +114,25 @@ export default function Home() {
         style={styles.banner}
       />
 
+      {/* CATEGORIES */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>SHOP BY CATEGORY</Text>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>
+            SHOP BY CATEGORY
+          </Text>
           <TouchableOpacity style={styles.viewAll}>
             <Text style={styles.viewAllText}>View All</Text>
             <ChevronRight size={20} color="#ff3f6c" />
           </TouchableOpacity>
         </View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.categoriesScroll}
-        >
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {isLoading ? (
-            <ActivityIndicator
-              size="large"
-              color="#ff3f6c"
-              style={styles.loader}
-            />
+            <ActivityIndicator size="large" color={theme.tint} />
           ) : !categories || categories.length === 0 ? (
-            <Text style={styles.emptyText}>No categories available</Text>
+            <Text style={[styles.emptyText, { color: theme.icon }]}>
+              No categories available
+            </Text>
           ) : (
             categories.map((category: any) => (
               <TouchableOpacity key={category._id} style={styles.categoryCard}>
@@ -106,22 +140,22 @@ export default function Home() {
                   source={{ uri: category.image }}
                   style={styles.categoryImage}
                 />
-                <Text style={styles.categoryName}>{category.name}</Text>
+                <Text style={[styles.categoryName, { color: theme.text }]}>
+                  {category.name}
+                </Text>
               </TouchableOpacity>
             ))
           )}
         </ScrollView>
       </View>
 
+      {/* DEALS */}
       <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>DEALS OF THE DAY</Text>
-        </View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.dealsScroll}
-        >
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>
+          DEALS OF THE DAY
+        </Text>
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {deals.map((deal) => (
             <TouchableOpacity key={deal.id} style={styles.dealCard}>
               <Image source={{ uri: deal.image }} style={styles.dealImage} />
@@ -133,46 +167,51 @@ export default function Home() {
         </ScrollView>
       </View>
 
+      {/* PRODUCTS */}
       <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>TRENDING NOW</Text>
-        </View>
-        <View style={styles.productsGrid}>
-          {isLoading ? (
-            <ActivityIndicator
-              size="large"
-              color="#ff3f6c"
-              style={styles.loader}
-            />
-          ) : !product || product.length === 0 ? (
-            <Text style={styles.emptyText}>No Product available</Text>
-          ) : ( 
-            <View style={styles.productsGrid}>
-              {product.map((product: any) => (
-                <TouchableOpacity
-                  key={product._id}
-                  style={styles.productCard}
-                  onPress={() => handleProductPress(product._id)}
-                >
-                  <Image
-                    source={{ uri: product.images[0
-                      
-                    ] }}
-                    style={styles.productImage}
-                  />
-                  <View style={styles.productInfo}>
-                    <Text style={styles.brandName}>{product.brand}</Text>
-                    <Text style={styles.productName}>{product.name}</Text>
-                    <View style={styles.priceRow}>
-                      <Text style={styles.productPrice}>{product.price}</Text>
-                      <Text style={styles.discount}>{product.discount}</Text>
-                    </View>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>
+          TRENDING NOW
+        </Text>
+
+        {isLoading ? (
+          <ActivityIndicator size="large" color={theme.tint} />
+        ) : !product || product.length === 0 ? (
+          <Text style={[styles.emptyText, { color: theme.icon }]}>
+            No Product available
+          </Text>
+        ) : (
+          <View style={styles.productsGrid}>
+            {product.map((product: any) => (
+              <TouchableOpacity
+                key={product._id}
+                style={[
+                  styles.productCard,
+                  { backgroundColor: theme.background },
+                ]}
+                onPress={() => handleProductPress(product._id)}
+              >
+                <Image
+                  source={{ uri: product.images[0] }}
+                  style={styles.productImage}
+                />
+                <View style={styles.productInfo}>
+                  <Text style={[styles.brandName, { color: theme.icon }]}>
+                    {product.brand}
+                  </Text>
+                  <Text style={[styles.productName, { color: theme.text }]}>
+                    {product.name}
+                  </Text>
+                  <View style={styles.priceRow}>
+                    <Text style={[styles.productPrice, { color: theme.text }]}>
+                      {product.price}
+                    </Text>
+                    <Text style={styles.discount}>{product.discount}</Text>
                   </View>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-        </View>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </View>
     </ScrollView>
   );
@@ -188,7 +227,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     padding: 15,
-    paddingTop: 50,
+    // paddingTop: 50,
     backgroundColor: "#fff",
     borderBottomWidth: 1,
     borderBottomColor: "#f0f0f0",
@@ -334,5 +373,14 @@ const styles = StyleSheet.create({
   },
   loader: {
     marginTop: 50,
+  },
+  actions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  iconButton: {
+    padding: 6,
+    borderRadius: 20,
   },
 });

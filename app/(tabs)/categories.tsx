@@ -8,7 +8,9 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  SafeAreaView,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Collapsible } from "@/components/Collapsible";
 import { ExternalLink } from "@/components/ExternalLink";
@@ -20,13 +22,14 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 import { Search, X } from "lucide-react-native";
 import axios from "axios";
+import { useTheme } from "@/hooks/useTheme";
 
 export default function TabTwoScreen() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(
-    null
+    null,
   );
   const [isLoading, setIsLoading] = useState(false);
   const [categories, setcategories] = useState<any>(null);
@@ -80,17 +83,20 @@ export default function TabTwoScreen() {
     setSelectedSubcategory(subcategoryId);
     setSearchQuery("");
   };
+  /* Hook moved up */
+  const { theme } = useTheme();
+
   const filtercategories = categories?.filter(
     (category: any) =>
       category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       category.subcategory.some((subcategory: any) =>
-        subcategory.toLowerCase().includes(searchQuery.toLowerCase())
+        subcategory.toLowerCase().includes(searchQuery.toLowerCase()),
       ) ||
       category.productId.some(
         (product: any) =>
           product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          product.brand.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+          product.brand.toLowerCase().includes(searchQuery.toLowerCase()),
+      ),
   );
   const selectedcategorydata = selectedCategory
     ? categories?.find((cat: any) => cat._id === selectedCategory)
@@ -99,39 +105,79 @@ export default function TabTwoScreen() {
     return products?.map((product: any) => (
       <TouchableOpacity
         key={product._id}
-        style={styles.productCard}
+        style={[
+          styles.productCard,
+          { backgroundColor: theme.surface, shadowColor: theme.icon },
+        ]}
         onPress={() => router.push(`/product/${product._id}`)}
       >
-        <Image source={{ uri: product.images[0] }} style={styles.productImage} />
+        <Image
+          source={{ uri: product.images[0] }}
+          style={styles.productImage}
+        />
         <View style={styles.productInfo}>
-          <Text style={styles.brandName}>{product.brand}</Text>
-          <Text style={styles.productName}>{product.name}</Text>
+          <Text style={[styles.brandName, { color: theme.icon }]}>
+            {product.brand}
+          </Text>
+          <Text style={[styles.productName, { color: theme.text }]}>
+            {product.name}
+          </Text>
           <View style={styles.priceRow}>
-            <Text style={styles.price}>₹{product.price}</Text>
-            <Text style={styles.discount}>{product.discount}</Text>
+            <Text style={[styles.price, { color: theme.text }]}>
+              ₹{product.price}
+            </Text>
+            <Text style={[styles.discount, { color: theme.tint }]}>
+              {product.discount}
+            </Text>
           </View>
         </View>
       </TouchableOpacity>
     ));
   };
+  const insets = useSafeAreaInsets();
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Categories</Text>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <View
+        style={[
+          styles.header,
+          {
+            backgroundColor: theme.background,
+            borderBottomColor: theme.border,
+            paddingTop: insets.top + 10,
+          },
+        ]}
+      >
+        <Text style={[styles.headerTitle, { color: theme.text }]}>
+          Categories
+        </Text>
       </View>
 
-      <View style={styles.searchContainer}>
-        <View style={styles.searchInputContainer}>
-          <Search size={20} color="#666" style={styles.searchIcon} />
+      <View
+        style={[
+          styles.searchContainer,
+          {
+            backgroundColor: theme.background,
+            borderBottomColor: theme.border,
+          },
+        ]}
+      >
+        <View
+          style={[
+            styles.searchInputContainer,
+            { backgroundColor: theme.surface },
+          ]}
+        >
+          <Search size={20} color={theme.icon} style={styles.searchIcon} />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: theme.text }]}
             placeholder="Search for products, brands and more"
+            placeholderTextColor={theme.icon}
             value={searchQuery}
             onChangeText={handleSearch}
           />
           {searchQuery !== "" && (
             <TouchableOpacity onPress={clearSearch}>
-              <X size={20} color="#666" />
+              <X size={20} color={theme.icon} />
             </TouchableOpacity>
           )}
         </View>
@@ -142,7 +188,10 @@ export default function TabTwoScreen() {
             {filtercategories?.map((category: any) => (
               <TouchableOpacity
                 key={category._id}
-                style={styles.categoryCard}
+                style={[
+                  styles.categoryCard,
+                  { backgroundColor: theme.surface, shadowColor: theme.icon },
+                ]}
                 onPress={() => handleCategorySelect(category._id)}
               >
                 <Image
@@ -150,16 +199,28 @@ export default function TabTwoScreen() {
                   style={styles.categoryImage}
                 />
                 <View style={styles.categoryInfo}>
-                  <Text style={styles.categoryName}>{category.name}</Text>
+                  <Text style={[styles.categoryName, { color: theme.text }]}>
+                    {category.name}
+                  </Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                     <View style={styles.subcategories}>
                       {category?.subcategory?.map((sub: any, index: any) => (
                         <TouchableOpacity
                           key={index}
-                          style={styles.subcategoryTag}
+                          style={[
+                            styles.subcategoryTag,
+                            { backgroundColor: theme.background },
+                          ]}
                           onPress={() => handleSubcategorySelect(sub)}
                         >
-                          <Text style={styles.subcategoryText}>{sub}</Text>
+                          <Text
+                            style={[
+                              styles.subcategoryText,
+                              { color: theme.icon },
+                            ]}
+                          >
+                            {sub}
+                          </Text>
                         </TouchableOpacity>
                       ))}
                     </View>
@@ -177,9 +238,11 @@ export default function TabTwoScreen() {
                 style={styles.backButton}
                 onPress={() => setSelectedCategory(null)}
               >
-                <Text style={styles.backButtonText}>← Back to Categories</Text>
+                <Text style={[styles.backButtonText, { color: theme.tint }]}>
+                  ← Back to Categories
+                </Text>
               </TouchableOpacity>
-              <Text style={styles.categoryTitle}>
+              <Text style={[styles.categoryTitle, { color: theme.text }]}>
                 {selectedcategorydata.name}
               </Text>
             </View>
@@ -189,28 +252,31 @@ export default function TabTwoScreen() {
               showsHorizontalScrollIndicator={false}
               style={styles.subcategoriesScroll}
             >
-              {selectedcategorydata.subcategory.map(
-                (sub: any, index: any) => (
-                  <TouchableOpacity
-                    key={index}
+              {selectedcategorydata.subcategory.map((sub: any, index: any) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    styles.subcategoryButton,
+                    { backgroundColor: theme.surface },
+                    selectedSubcategory === sub && {
+                      backgroundColor: theme.tint,
+                    },
+                  ]}
+                  onPress={() => handleSubcategorySelect(sub)}
+                >
+                  <Text
                     style={[
-                      styles.subcategoryButton,
-                      selectedSubcategory === sub && styles.selectedSubcategory,
+                      styles.subcategoryButtonText,
+                      { color: theme.text },
+                      selectedSubcategory === sub && {
+                        color: theme.background,
+                      },
                     ]}
-                    onPress={() => handleSubcategorySelect(sub)}
                   >
-                    <Text
-                      style={[
-                        styles.subcategoryButtonText,
-                        selectedSubcategory === sub &&
-                          styles.selectedSubcategoryText,
-                      ]}
-                    >
-                      {sub}
-                    </Text>
-                  </TouchableOpacity>
-                )
-              )}
+                    {sub}
+                  </Text>
+                </TouchableOpacity>
+              ))}
             </ScrollView>
             <View style={styles.productsGrid}>
               {renderProducts(selectedcategorydata?.productId)}
@@ -227,16 +293,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#fff",
   },
   container: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   header: {
     padding: 15,
-    paddingTop: 50,
-    backgroundColor: "#fff",
+    // paddingTop: 50, // Handled dynamically
     borderBottomWidth: 1,
     borderBottomColor: "#f0f0f0",
   },
