@@ -14,6 +14,8 @@ import { useAuth } from "@/context/AuthContext";
 import axios from "axios";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../hooks/useTheme";
+import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
+import { useFocusEffect } from "@react-navigation/native";
 
 const deals = [
   {
@@ -38,6 +40,15 @@ export default function Home() {
   const { user } = useAuth();
   const { theme, colorScheme, toggleTheme } = useTheme();
   const insets = useSafeAreaInsets();
+  const { recentlyViewed, refresh: refreshRecentlyViewed } =
+    useRecentlyViewed();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      refreshRecentlyViewed();
+    }, [refreshRecentlyViewed]),
+  );
+
   const handleProductPress = (productId: number) => {
     if (!user) {
       router.push("/login");
@@ -166,6 +177,60 @@ export default function Home() {
           ))}
         </ScrollView>
       </View>
+
+      {/* RECENTLY VIEWED */}
+      {recentlyViewed.length > 0 && (
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>
+            RECENTLY VIEWED
+          </Text>
+
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {recentlyViewed.map((item) => (
+              <TouchableOpacity
+                key={item._id}
+                style={[
+                  styles.productCard,
+                  {
+                    backgroundColor: theme.background,
+                    width: 160,
+                    marginRight: 12,
+                    marginLeft: 0,
+                  },
+                ]}
+                onPress={() => handleProductPress(item._id as any)}
+              >
+                <Image
+                  source={{ uri: item.images[0] }}
+                  style={[styles.productImage, { height: 160 }]}
+                />
+                <View style={styles.productInfo}>
+                  <Text
+                    numberOfLines={1}
+                    style={[styles.brandName, { color: theme.icon }]}
+                  >
+                    {item.brand}
+                  </Text>
+                  <Text
+                    numberOfLines={1}
+                    style={[styles.productName, { color: theme.text }]}
+                  >
+                    {item.name}
+                  </Text>
+                  <View style={styles.priceRow}>
+                    <Text style={[styles.productPrice, { color: theme.text }]}>
+                      {item.price}
+                    </Text>
+                    {item.discount && (
+                      <Text style={styles.discount}>{item.discount}</Text>
+                    )}
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
 
       {/* PRODUCTS */}
       <View style={styles.section}>

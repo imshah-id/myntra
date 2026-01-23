@@ -14,6 +14,7 @@ import { Heart, ShoppingBag } from "lucide-react-native";
 import React from "react";
 import { useAuth } from "@/context/AuthContext";
 import axios from "axios";
+import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 
 export default function ProductDetails() {
   const { id } = useLocalSearchParams();
@@ -28,6 +29,8 @@ export default function ProductDetails() {
   const { user } = useAuth();
   const [product, setproduct] = useState<any>(null);
   const [iswishlist, setiswishlist] = useState(false);
+  const { addToRecentlyViewed } = useRecentlyViewed();
+
   useEffect(() => {
     // Simulate loading time
 
@@ -38,6 +41,7 @@ export default function ProductDetails() {
           `https://myntrabackend-eal6.onrender.com/product/${id}`,
         );
         setproduct(product.data);
+        addToRecentlyViewed(product.data);
       } catch (error) {
         console.log(error);
         setIsLoading(false);
@@ -46,7 +50,7 @@ export default function ProductDetails() {
       }
     };
     fetchproduct();
-  }, []);
+  }, [id]);
 
   useEffect(() => {
     // Start auto-scroll
