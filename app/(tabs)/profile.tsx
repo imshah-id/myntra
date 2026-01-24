@@ -136,10 +136,13 @@ export default function Profile() {
 
         {/* LOGOUT */}
         <TouchableOpacity
-          style={[styles.logoutButton, { borderColor: theme.tint }]}
+          style={[
+            styles.logoutButton,
+            { backgroundColor: theme.tint, borderColor: "transparent" },
+          ]}
           onPress={handleLogout}
         >
-          <LogOut size={24} color={theme.tint} />
+          <LogOut size={24} color="#fff" />
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -240,7 +243,7 @@ const styles = StyleSheet.create({
   logoutText: {
     marginLeft: 10,
     fontSize: 16,
-    color: "#ff3f6c",
+    color: "#fff",
     fontWeight: "bold",
   },
 });

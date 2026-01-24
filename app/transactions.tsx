@@ -23,6 +23,7 @@ import axios from "axios";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ORDER_STATUSES } from "@/constants/orders";
 import { useFocusEffect } from "expo-router";
+import { useTheme } from "../hooks/useTheme";
 // import * as FileSystem from "expo-file-system";
 // import * as Sharing from "expo-sharing";
 // Note: Uncomment above imports after installing expo-file-system and expo-sharing
@@ -47,6 +48,7 @@ export default function Transactions() {
   const router = useRouter();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -221,42 +223,61 @@ export default function Transactions() {
 
   if (!user) {
     return (
-      <View style={styles.center}>
-        <Text>Please login to view transactions.</Text>
+      <View style={[styles.center, { backgroundColor: theme.background }]}>
+        <Text style={{ color: theme.text }}>
+          Please login to view transactions.
+        </Text>
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View
+      style={[
+        styles.container,
+        { paddingTop: insets.top, backgroundColor: theme.surface },
+      ]}
+    >
       {/* Header */}
-      <View style={styles.header}>
+      <View
+        style={[
+          styles.header,
+          {
+            backgroundColor: theme.background,
+            borderBottomColor: theme.border,
+          },
+        ]}
+      >
         <TouchableOpacity
           onPress={() => router.back()}
           style={styles.backButton}
         >
-          <ArrowLeft size={24} color="#3e3e3e" />
+          <ArrowLeft size={24} color={theme.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>My Transactions</Text>
+        <Text style={[styles.headerTitle, { color: theme.text }]}>
+          My Transactions
+        </Text>
         <View style={styles.headerActions}>
           <TouchableOpacity
             onPress={() => setShowSortMenu(!showSortMenu)}
             style={styles.iconButton}
           >
-            <ArrowUpDown size={24} color="#3e3e3e" />
+            <ArrowUpDown size={24} color={theme.text} />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setShowExportMenu(!showExportMenu)}
             style={styles.iconButton}
           >
-            <Download size={24} color="#3e3e3e" />
+            <Download size={24} color={theme.text} />
           </TouchableOpacity>
         </View>
       </View>
 
       {/* Sort Menu */}
       {showSortMenu && (
-        <View style={styles.menuContainer}>
+        <View
+          style={[styles.menuContainer, { backgroundColor: theme.surface }]}
+        >
           <TouchableOpacity
             style={styles.menuItem}
             onPress={() => {
@@ -264,10 +285,12 @@ export default function Transactions() {
               setShowSortMenu(false);
             }}
           >
-            <Text style={styles.menuText}>Date (Newest First)</Text>
+            <Text style={[styles.menuText, { color: theme.text }]}>
+              Date (Newest First)
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.menuItem}
+            style={[styles.menuItem, { borderBottomColor: theme.border }]}
             onPress={() => {
               setSortBy("date-asc");
               setShowSortMenu(false);
@@ -298,15 +321,19 @@ export default function Transactions() {
 
       {/* Export Menu */}
       {showExportMenu && (
-        <View style={styles.menuContainer}>
+        <View
+          style={[styles.menuContainer, { backgroundColor: theme.background }]}
+        >
           <TouchableOpacity
-            style={styles.menuItem}
+            style={[styles.menuItem, { borderBottomColor: theme.border }]}
             onPress={() => {
               setExportFormat("pdf");
               handleExport();
             }}
           >
-            <Text style={styles.menuText}>Export as PDF</Text>
+            <Text style={[styles.menuText, { color: theme.text }]}>
+              Export as PDF
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.menuItem}
@@ -315,13 +342,17 @@ export default function Transactions() {
               handleExport();
             }}
           >
-            <Text style={styles.menuText}>Export as CSV</Text>
+            <Text style={[styles.menuText, { color: theme.text }]}>
+              Export as CSV
+            </Text>
           </TouchableOpacity>
         </View>
       )}
 
       {/* Filters */}
-      <View style={styles.filterSection}>
+      <View
+        style={[styles.filterSection, { backgroundColor: theme.background }]}
+      >
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {["All", "Online", "COD", "Refund"].map((type) => (
             <TouchableOpacity
@@ -336,8 +367,9 @@ export default function Transactions() {
               <Text
                 style={[
                   styles.filterText,
-                  (filterType === type || (type === "All" && !filterType)) &&
-                    styles.activeFilterText,
+                  filterType === type || (type === "All" && !filterType)
+                    ? styles.activeFilterText
+                    : { color: theme.text },
                 ]}
               >
                 {type}
@@ -349,14 +381,20 @@ export default function Transactions() {
         {/* Date Range Quick Filters */}
         <View style={styles.dateFilterRow}>
           <TouchableOpacity
-            style={styles.dateFilterButton}
+            style={[
+              styles.dateFilterButton,
+              { backgroundColor: theme.surface },
+            ]}
             onPress={() => setQuickDateRange(7)}
           >
             <Calendar size={16} color="#ff3f6c" />
             <Text style={styles.dateFilterText}>Last 7 days</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.dateFilterButton}
+            style={[
+              styles.dateFilterButton,
+              { backgroundColor: theme.surface },
+            ]}
             onPress={() => setQuickDateRange(30)}
           >
             <Calendar size={16} color="#ff3f6c" />
@@ -364,10 +402,15 @@ export default function Transactions() {
           </TouchableOpacity>
           {(dateFrom || dateTo) && (
             <TouchableOpacity
-              style={styles.clearFilterButton}
+              style={[
+                styles.clearFilterButton,
+                { backgroundColor: theme.surface },
+              ]}
               onPress={clearDateFilter}
             >
-              <Text style={styles.clearFilterText}>Clear</Text>
+              <Text style={[styles.clearFilterText, { color: theme.icon }]}>
+                Clear
+              </Text>
             </TouchableOpacity>
           )}
         </View>
@@ -375,34 +418,51 @@ export default function Transactions() {
 
       {/* Content */}
       {isLoading ? (
-        <View style={styles.center}>
+        <View style={[styles.center, { backgroundColor: theme.surface }]}>
           <ActivityIndicator size="large" color="#ff3f6c" />
         </View>
       ) : transactions.length === 0 ? (
-        <View style={styles.center}>
-          <FileText size={48} color="#ccc" />
-          <Text style={styles.emptyText}>No transactions found</Text>
+        <View style={[styles.center, { backgroundColor: theme.surface }]}>
+          <FileText size={48} color={theme.icon} />
+          <Text style={[styles.emptyText, { color: theme.text }]}>
+            No transactions found
+          </Text>
         </View>
       ) : (
         <ScrollView style={styles.content}>
           {transactions.map((txn) => {
             const { date, time } = formatDateTime(txn.date);
             return (
-              <View key={txn._id} style={styles.card}>
+              <View
+                key={txn._id}
+                style={[styles.card, { backgroundColor: theme.background }]}
+              >
                 <View style={styles.cardHeader}>
                   <View>
-                    <Text style={styles.txnId}>ID: {txn._id.slice(-8)}</Text>
-                    <Text style={styles.txnDate}>{date}</Text>
-                    <Text style={styles.txnTime}>{time}</Text>
+                    <Text style={[styles.txnId, { color: theme.text }]}>
+                      ID: {txn._id.slice(-8)}
+                    </Text>
+                    <Text style={[styles.txnDate, { color: theme.icon }]}>
+                      {date}
+                    </Text>
+                    <Text style={[styles.txnTime, { color: theme.icon }]}>
+                      {time}
+                    </Text>
                   </View>
-                  <Text style={styles.amount}>₹{txn.amount}</Text>
+                  <Text style={[styles.amount, { color: theme.text }]}>
+                    ₹{txn.amount}
+                  </Text>
                 </View>
 
-                <View style={styles.divider} />
+                <View
+                  style={[styles.divider, { backgroundColor: theme.border }]}
+                />
 
                 <View style={styles.cardBody}>
                   <View style={styles.row}>
-                    <Text style={styles.label}>Order Status</Text>
+                    <Text style={[styles.label, { color: theme.icon }]}>
+                      Order Status
+                    </Text>
                     <Text
                       style={[
                         styles.value,
@@ -413,15 +473,25 @@ export default function Transactions() {
                     </Text>
                   </View>
                   <View style={styles.row}>
-                    <Text style={styles.label}>Type</Text>
-                    <Text style={styles.value}>{txn.type}</Text>
+                    <Text style={[styles.label, { color: theme.icon }]}>
+                      Type
+                    </Text>
+                    <Text style={[styles.value, { color: theme.text }]}>
+                      {txn.type}
+                    </Text>
                   </View>
                   <View style={styles.row}>
-                    <Text style={styles.label}>Mode</Text>
-                    <Text style={styles.value}>{txn.paymentMode}</Text>
+                    <Text style={[styles.label, { color: theme.icon }]}>
+                      Mode
+                    </Text>
+                    <Text style={[styles.value, { color: theme.text }]}>
+                      {txn.paymentMode}
+                    </Text>
                   </View>
                   <View style={styles.row}>
-                    <Text style={styles.label}>Status</Text>
+                    <Text style={[styles.label, { color: theme.icon }]}>
+                      Status
+                    </Text>
                     <View style={styles.statusBadge}>
                       <View
                         style={[
@@ -522,7 +592,7 @@ const styles = StyleSheet.create({
     borderColor: "transparent",
   },
   activeFilter: {
-    backgroundColor: "#fff",
+    backgroundColor: "#ff3f6c",
     borderColor: "#ff3f6c",
   },
   filterText: {
@@ -530,7 +600,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   activeFilterText: {
-    color: "#ff3f6c",
+    color: "#fff",
     fontWeight: "bold",
   },
   dateFilterRow: {

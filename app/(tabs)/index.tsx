@@ -2,11 +2,11 @@ import {
   ScrollView,
   View,
   Text,
-  Image,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
 } from "react-native";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Search, ChevronRight, Sun, Moon } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
@@ -123,6 +123,8 @@ export default function Home() {
           uri: "https://images.unsplash.com/photo-1445205170230-053b83016050?w=800&auto=format&fit=crop",
         }}
         style={styles.banner}
+        contentFit="cover"
+        transition={1000}
       />
 
       {/* CATEGORIES */}
@@ -150,6 +152,8 @@ export default function Home() {
                 <Image
                   source={{ uri: category.image }}
                   style={styles.categoryImage}
+                  contentFit="cover"
+                  transition={1000}
                 />
                 <Text style={[styles.categoryName, { color: theme.text }]}>
                   {category.name}
@@ -169,7 +173,12 @@ export default function Home() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {deals.map((deal) => (
             <TouchableOpacity key={deal.id} style={styles.dealCard}>
-              <Image source={{ uri: deal.image }} style={styles.dealImage} />
+              <Image
+                source={{ uri: deal.image }}
+                style={styles.dealImage}
+                contentFit="cover"
+                transition={1000}
+              />
               <View style={styles.dealOverlay}>
                 <Text style={styles.dealTitle}>{deal.title}</Text>
               </View>
@@ -203,6 +212,8 @@ export default function Home() {
                 <Image
                   source={{ uri: item.images[0] }}
                   style={[styles.productImage, { height: 160 }]}
+                  contentFit="cover"
+                  transition={1000}
                 />
                 <View style={styles.productInfo}>
                   <Text
@@ -258,6 +269,8 @@ export default function Home() {
                 <Image
                   source={{ uri: product.images[0] }}
                   style={styles.productImage}
+                  contentFit="cover"
+                  transition={1000}
                 />
                 <View style={styles.productInfo}>
                   <Text style={[styles.brandName, { color: theme.icon }]}>
@@ -284,7 +297,7 @@ export default function Home() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     backgroundColor: "#fff",
   },
   header: {

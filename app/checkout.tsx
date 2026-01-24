@@ -1,7 +1,7 @@
 import { useAuth } from "@/context/AuthContext";
 import axios from "axios";
 import { useRouter } from "expo-router";
-import { CreditCard, MapPin, Truck } from "lucide-react-native";
+import { CreditCard, MapPin, Truck, ArrowLeft } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -14,6 +14,7 @@ import {
   Alert,
 } from "react-native";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { useTheme } from "@/hooks/useTheme";
 
 export default function Checkout() {
   const [loading, setLoading] = useState(false);
@@ -21,6 +22,7 @@ export default function Checkout() {
   const router = useRouter();
   const { user } = useAuth();
   const { cancelAllNotifications } = usePushNotifications();
+  const { theme } = useTheme();
 
   // Form state
   const [fullName, setFullName] = useState("");
@@ -194,9 +196,11 @@ export default function Checkout() {
 
   if (!user) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
         <View style={styles.centerContent}>
-          <Text style={styles.loginText}>Please login to checkout</Text>
+          <Text style={[styles.loginText, { color: theme.text }]}>
+            Please login to checkout
+          </Text>
           <TouchableOpacity
             style={styles.loginButton}
             onPress={() => router.push("/login")}
@@ -217,60 +221,110 @@ export default function Checkout() {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Checkout</Text>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <View
+        style={[
+          styles.header,
+          {
+            backgroundColor: theme.background,
+            borderBottomColor: theme.icon,
+          },
+        ]}
+      >
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={{ marginRight: 10 }}
+        >
+          <ArrowLeft size={24} color={theme.text} />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: theme.text }]}>
+          Checkout
+        </Text>
       </View>
       <ScrollView style={styles.content}>
         {/* Shipping Address Section */}
-        <View style={styles.section}>
+        <View style={[styles.section, { backgroundColor: theme.surface }]}>
           <View style={styles.sectionHeader}>
             <MapPin size={24} color="#ff3f6c" />
-            <Text style={styles.sectionTitle}>Shipping Address</Text>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>
+              Shipping Address
+            </Text>
           </View>
           <View style={styles.form}>
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                { backgroundColor: theme.background, color: theme.text },
+              ]}
               placeholder="Full Name"
+              placeholderTextColor={theme.icon}
               value={fullName}
               onChangeText={setFullName}
             />
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                { backgroundColor: theme.background, color: theme.text },
+              ]}
               placeholder="Address Line 1"
+              placeholderTextColor={theme.icon}
               value={addressLine1}
               onChangeText={setAddressLine1}
             />
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                { backgroundColor: theme.background, color: theme.text },
+              ]}
               placeholder="Address Line 2 (Optional)"
+              placeholderTextColor={theme.icon}
               value={addressLine2}
               onChangeText={setAddressLine2}
             />
             <View style={styles.row}>
               <TextInput
-                style={[styles.input, styles.halfInput]}
+                style={[
+                  styles.input,
+                  styles.halfInput,
+                  { backgroundColor: theme.background, color: theme.text },
+                ]}
                 placeholder="City"
+                placeholderTextColor={theme.icon}
                 value={city}
                 onChangeText={setCity}
               />
               <TextInput
-                style={[styles.input, styles.halfInput]}
+                style={[
+                  styles.input,
+                  styles.halfInput,
+                  { backgroundColor: theme.background, color: theme.text },
+                ]}
                 placeholder="State"
+                placeholderTextColor={theme.icon}
                 value={state}
                 onChangeText={setState}
               />
             </View>
             <View style={styles.row}>
               <TextInput
-                style={[styles.input, styles.halfInput]}
+                style={[
+                  styles.input,
+                  styles.halfInput,
+                  { backgroundColor: theme.background, color: theme.text },
+                ]}
                 placeholder="Postal Code"
+                placeholderTextColor={theme.icon}
                 value={postalCode}
                 onChangeText={setPostalCode}
               />
               <TextInput
-                style={[styles.input, styles.halfInput]}
+                style={[
+                  styles.input,
+                  styles.halfInput,
+                  { backgroundColor: theme.background, color: theme.text },
+                ]}
                 placeholder="Country"
+                placeholderTextColor={theme.icon}
                 value={country}
                 onChangeText={setCountry}
               />
@@ -279,15 +333,21 @@ export default function Checkout() {
         </View>
 
         {/* Payment Mode Selection */}
-        <View style={styles.section}>
+        <View style={[styles.section, { backgroundColor: theme.surface }]}>
           <View style={styles.sectionHeader}>
             <CreditCard size={24} color="#ff3f6c" />
-            <Text style={styles.sectionTitle}>Payment Method</Text>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>
+              Payment Method
+            </Text>
           </View>
           <View style={styles.paymentModeContainer}>
             <TouchableOpacity
               style={[
                 styles.paymentModeButton,
+                {
+                  backgroundColor: theme.background,
+                  borderColor: theme.border,
+                },
                 paymentMode === "Online" && styles.paymentModeButtonActive,
               ]}
               onPress={() => setPaymentMode("Online")}
@@ -295,6 +355,7 @@ export default function Checkout() {
               <Text
                 style={[
                   styles.paymentModeText,
+                  { color: theme.icon },
                   paymentMode === "Online" && styles.paymentModeTextActive,
                 ]}
               >
@@ -304,6 +365,10 @@ export default function Checkout() {
             <TouchableOpacity
               style={[
                 styles.paymentModeButton,
+                {
+                  backgroundColor: theme.background,
+                  borderColor: theme.border,
+                },
                 paymentMode === "COD" && styles.paymentModeButtonActive,
               ]}
               onPress={() => setPaymentMode("COD")}
@@ -311,6 +376,7 @@ export default function Checkout() {
               <Text
                 style={[
                   styles.paymentModeText,
+                  { color: theme.icon },
                   paymentMode === "COD" && styles.paymentModeTextActive,
                 ]}
               >
@@ -322,8 +388,12 @@ export default function Checkout() {
           {paymentMode === "Online" && (
             <View style={styles.form}>
               <TextInput
-                style={styles.input}
+                style={[
+                  styles.input,
+                  { backgroundColor: theme.background, color: theme.text },
+                ]}
                 placeholder="Card Number"
+                placeholderTextColor={theme.icon}
                 value={cardNumber}
                 onChangeText={setCardNumber}
                 keyboardType="numeric"
@@ -331,15 +401,25 @@ export default function Checkout() {
               />
               <View style={styles.row}>
                 <TextInput
-                  style={[styles.input, styles.halfInput]}
+                  style={[
+                    styles.input,
+                    styles.halfInput,
+                    { backgroundColor: theme.background, color: theme.text },
+                  ]}
                   placeholder="Expiry Date (MM/YY)"
+                  placeholderTextColor={theme.icon}
                   value={expiryDate}
                   onChangeText={setExpiryDate}
                   maxLength={5}
                 />
                 <TextInput
-                  style={[styles.input, styles.halfInput]}
+                  style={[
+                    styles.input,
+                    styles.halfInput,
+                    { backgroundColor: theme.background, color: theme.text },
+                  ]}
                   placeholder="CVV"
+                  placeholderTextColor={theme.icon}
                   value={cvv}
                   onChangeText={setCvv}
                   keyboardType="numeric"
@@ -352,34 +432,56 @@ export default function Checkout() {
         </View>
 
         {/* Order Summary */}
-        <View style={styles.section}>
+        <View style={[styles.section, { backgroundColor: theme.surface }]}>
           <View style={styles.sectionHeader}>
             <Truck size={24} color="#ff3f6c" />
-            <Text style={styles.sectionTitle}>Order Summary</Text>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>
+              Order Summary
+            </Text>
           </View>
           <View style={styles.summary}>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>
+              <Text style={[styles.summaryLabel, { color: theme.icon }]}>
                 Subtotal ({bag.length} items)
               </Text>
-              <Text style={styles.summaryValue}>₹{subtotal}</Text>
+              <Text style={[styles.summaryValue, { color: theme.text }]}>
+                ₹{subtotal}
+              </Text>
             </View>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Shipping</Text>
-              <Text style={styles.summaryValue}>₹{shipping}</Text>
+              <Text style={[styles.summaryLabel, { color: theme.icon }]}>
+                Shipping
+              </Text>
+              <Text style={[styles.summaryValue, { color: theme.text }]}>
+                ₹{shipping}
+              </Text>
             </View>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Tax (5%)</Text>
-              <Text style={styles.summaryValue}>₹{tax}</Text>
+              <Text style={[styles.summaryLabel, { color: theme.icon }]}>
+                Tax (5%)
+              </Text>
+              <Text style={[styles.summaryValue, { color: theme.text }]}>
+                ₹{tax}
+              </Text>
             </View>
             <View style={[styles.summaryRow, styles.total]}>
-              <Text style={styles.totalLabel}>Total</Text>
+              <Text style={[styles.totalLabel, { color: theme.text }]}>
+                Total
+              </Text>
               <Text style={styles.totalValue}>₹{total}</Text>
             </View>
           </View>
         </View>
       </ScrollView>
-      <View style={styles.footer}>
+      <View
+        style={[
+          styles.footer,
+          {
+            backgroundColor: theme.background,
+            borderTopColor: theme.icon,
+          },
+        ]}
+      >
         <TouchableOpacity
           style={[
             styles.placeOrderButton,
@@ -431,6 +533,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderBottomWidth: 1,
     borderBottomColor: "#f0f0f0",
+    flexDirection: "row",
+    alignItems: "center",
   },
   headerTitle: {
     fontSize: 24,
@@ -499,7 +603,7 @@ const styles = StyleSheet.create({
   },
   paymentModeButtonActive: {
     borderColor: "#ff3f6c",
-    backgroundColor: "#fff",
+    // backgroundColor: "#fff", // Removed to prevent white flash in dark mode
   },
   paymentModeText: {
     fontSize: 16,
@@ -550,7 +654,7 @@ const styles = StyleSheet.create({
   },
   placeOrderButton: {
     backgroundColor: "#ff3f6c",
-    padding: 15,
+    padding: 12,
     borderRadius: 10,
     alignItems: "center",
   },

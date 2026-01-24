@@ -12,6 +12,7 @@ import {
 import { useRouter } from "expo-router";
 import axios from "axios";
 import { useAuth } from "@/context/AuthContext";
+import { useTheme } from "@/hooks/useTheme";
 
 interface Product {
   _id: string;
@@ -34,6 +35,7 @@ export const RecommendationCarousel: React.FC<RecommendationCarouselProps> = ({
   const router = useRouter();
   const { user } = useAuth();
   const { width } = useWindowDimensions();
+  const { theme } = useTheme();
 
   // Calculate card width based on screen width (e.g., 40% of screen width)
   const cardWidth = width * 0.4;
@@ -81,8 +83,10 @@ export const RecommendationCarousel: React.FC<RecommendationCarouselProps> = ({
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>You May Also Like</Text>
+    <View style={[styles.container, { backgroundColor: theme.surface }]}>
+      <Text style={[styles.title, { color: theme.text }]}>
+        You May Also Like
+      </Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -91,23 +95,38 @@ export const RecommendationCarousel: React.FC<RecommendationCarouselProps> = ({
         {recommendations.map((item) => (
           <TouchableOpacity
             key={item._id}
-            style={[styles.card, { width: cardWidth }]}
+            style={[
+              styles.card,
+              {
+                width: cardWidth,
+                backgroundColor: theme.background,
+                borderColor: theme.border,
+              },
+            ]}
             onPress={() => router.push(`/product/${item._id}`)}
           >
             <Image
               source={{ uri: item.images[0] }}
-              style={styles.image}
+              style={[styles.image, { backgroundColor: theme.surface }]}
               resizeMode="cover"
             />
             <View style={styles.info}>
-              <Text style={styles.brand} numberOfLines={1}>
+              <Text
+                style={[styles.brand, { color: theme.icon }]}
+                numberOfLines={1}
+              >
                 {item.brand}
               </Text>
-              <Text style={styles.name} numberOfLines={1}>
+              <Text
+                style={[styles.name, { color: theme.text }]}
+                numberOfLines={1}
+              >
                 {item.name}
               </Text>
               <View style={styles.priceContainer}>
-                <Text style={styles.price}>₹{item.price}</Text>
+                <Text style={[styles.price, { color: theme.text }]}>
+                  ₹{item.price}
+                </Text>
                 {item.discount && (
                   <Text style={styles.discount}>{item.discount}</Text>
                 )}
@@ -123,7 +142,7 @@ export const RecommendationCarousel: React.FC<RecommendationCarouselProps> = ({
 const styles = StyleSheet.create({
   container: {
     marginVertical: 20,
-    backgroundColor: "#fff",
+    // backgroundColor handled inline
   },
   title: {
     fontSize: 18,

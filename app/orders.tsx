@@ -18,12 +18,14 @@ import {
   CheckCircle,
   Circle,
   CreditCard,
+  ArrowLeft,
 } from "lucide-react-native";
 import React from "react";
 import axios from "axios";
 import { useAuth } from "@/context/AuthContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ORDER_STATUSES } from "@/constants/orders";
+import { useTheme } from "../hooks/useTheme";
 
 // Status colors removed from here as they are now used from persistence util if needed,
 // but actually they are still here for UI.
@@ -88,6 +90,7 @@ export default function Orders() {
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
   const [orders, setOrders] = useState<any[]>([]);
+  const { theme } = useTheme();
 
   useEffect(() => {
     fetchOrders();
@@ -141,7 +144,9 @@ export default function Orders() {
 
   if (isLoading) {
     return (
-      <View style={styles.loaderContainer}>
+      <View
+        style={[styles.loaderContainer, { backgroundColor: theme.background }]}
+      >
         <ActivityIndicator size="large" color="#ff3f6c" />
       </View>
     );
@@ -149,14 +154,37 @@ export default function Orders() {
 
   if (!orders || orders.length === 0) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top }]}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>My Orders</Text>
+      <View
+        style={[
+          styles.container,
+          { paddingTop: insets.top, backgroundColor: theme.surface },
+        ]}
+      >
+        <View
+          style={[
+            styles.header,
+            {
+              backgroundColor: theme.background,
+              borderBottomColor: theme.border,
+            },
+          ]}
+        >
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={{ marginRight: 10 }}
+          >
+            <ArrowLeft size={24} color={theme.text} />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: theme.text }]}>
+            My Orders
+          </Text>
         </View>
         <View style={styles.emptyState}>
-          <Package size={64} color="#ccc" />
-          <Text style={styles.emptyText}>No orders found</Text>
-          <Text style={styles.emptySubtext}>
+          <Package size={64} color={theme.icon} />
+          <Text style={[styles.emptyText, { color: theme.text }]}>
+            No orders found
+          </Text>
+          <Text style={[styles.emptySubtext, { color: theme.icon }]}>
             Your orders will appear here once you make a purchase
           </Text>
         </View>
@@ -165,10 +193,35 @@ export default function Orders() {
   }
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Orders</Text>
-        <Text style={styles.headerSubtitle}>{orders.length} orders</Text>
+    <View
+      style={[
+        styles.container,
+        { paddingTop: insets.top, backgroundColor: theme.surface },
+      ]}
+    >
+      <View
+        style={[
+          styles.header,
+          {
+            backgroundColor: theme.background,
+            borderBottomColor: theme.border,
+          },
+        ]}
+      >
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={{ marginRight: 10 }}
+        >
+          <ArrowLeft size={24} color={theme.text} />
+        </TouchableOpacity>
+        <View>
+          <Text style={[styles.headerTitle, { color: theme.text }]}>
+            My Orders
+          </Text>
+          <Text style={[styles.headerSubtitle, { color: theme.icon }]}>
+            {orders.length} orders
+          </Text>
+        </View>
       </View>
 
       <ScrollView style={styles.content}>
@@ -182,16 +235,22 @@ export default function Orders() {
           );
 
           return (
-            <View key={order._id} style={styles.orderCard}>
+            <View
+              key={order._id}
+              style={[styles.orderCard, { backgroundColor: theme.background }]}
+            >
               <TouchableOpacity
-                style={styles.orderHeader}
+                style={[
+                  styles.orderHeader,
+                  { borderBottomColor: theme.border },
+                ]}
                 onPress={() => toggleOrderDetails(order._id)}
               >
                 <View>
-                  <Text style={styles.orderId}>
+                  <Text style={[styles.orderId, { color: theme.text }]}>
                     Order #{order._id.slice(-8)}
                   </Text>
-                  <Text style={styles.orderDate}>
+                  <Text style={[styles.orderDate, { color: theme.icon }]}>
                     {formatDate(order.createdAt)}
                   </Text>
                 </View>
@@ -218,16 +277,19 @@ export default function Orders() {
                       style={styles.itemImage}
                     />
                     <View style={styles.itemInfo}>
-                      <Text style={styles.brandName}>
+                      <Text style={[styles.brandName, { color: theme.icon }]}>
                         {item.productId.brand}
                       </Text>
-                      <Text style={styles.itemName} numberOfLines={2}>
+                      <Text
+                        style={[styles.itemName, { color: theme.text }]}
+                        numberOfLines={2}
+                      >
                         {item.productId.name}
                       </Text>
-                      <Text style={styles.itemDetails}>
+                      <Text style={[styles.itemDetails, { color: theme.icon }]}>
                         Size: {item.size} | Qty: {item.quantity}
                       </Text>
-                      <Text style={styles.itemPrice}>
+                      <Text style={[styles.itemPrice, { color: theme.text }]}>
                         ₹{item.productId.price}
                       </Text>
                     </View>
@@ -236,14 +298,21 @@ export default function Orders() {
               </View>
 
               {expandedOrder === order._id && (
-                <View style={styles.orderDetails}>
+                <View
+                  style={[
+                    styles.orderDetails,
+                    { borderTopColor: theme.border },
+                  ]}
+                >
                   {/* Shipping Address */}
                   <View style={styles.detailSection}>
                     <View style={styles.detailHeader}>
                       <MapPin size={20} color="#ff3f6c" />
-                      <Text style={styles.detailTitle}>Shipping Address</Text>
+                      <Text style={[styles.detailTitle, { color: theme.text }]}>
+                        Shipping Address
+                      </Text>
                     </View>
-                    <Text style={styles.detailText}>
+                    <Text style={[styles.detailText, { color: theme.icon }]}>
                       {order.shippingAddress}
                     </Text>
                   </View>
@@ -252,22 +321,32 @@ export default function Orders() {
                   <View style={styles.detailSection}>
                     <View style={styles.detailHeader}>
                       <CreditCard size={20} color="#ff3f6c" />
-                      <Text style={styles.detailTitle}>Payment Method</Text>
+                      <Text style={[styles.detailTitle, { color: theme.text }]}>
+                        Payment Method
+                      </Text>
                     </View>
-                    <Text style={styles.detailText}>{order.paymentMethod}</Text>
+                    <Text style={[styles.detailText, { color: theme.icon }]}>
+                      {order.paymentMethod}
+                    </Text>
                   </View>
 
                   {/* Tracking Information */}
                   <View style={styles.detailSection}>
                     <View style={styles.detailHeader}>
                       <Truck size={20} color="#ff3f6c" />
-                      <Text style={styles.detailTitle}>Order Tracking</Text>
+                      <Text style={[styles.detailTitle, { color: theme.text }]}>
+                        Order Tracking
+                      </Text>
                     </View>
                     <View style={styles.trackingInfo}>
-                      <Text style={styles.trackingNumber}>
+                      <Text
+                        style={[styles.trackingNumber, { color: theme.icon }]}
+                      >
                         Tracking: {trackingNumber}
                       </Text>
-                      <Text style={styles.trackingCarrier}>
+                      <Text
+                        style={[styles.trackingCarrier, { color: theme.icon }]}
+                      >
                         Carrier: {Math.random() > 0.5 ? "FedEx" : "DHL Express"}
                       </Text>
                     </View>
@@ -314,7 +393,11 @@ export default function Orders() {
 
                     {/* Timeline */}
                     <View style={styles.timeline}>
-                      <Text style={styles.timelineTitle}>Order History</Text>
+                      <Text
+                        style={[styles.timelineTitle, { color: theme.text }]}
+                      >
+                        Order History
+                      </Text>
                       {timeline.map((event: any, index: number) => (
                         <View key={index} style={styles.timelineEvent}>
                           <View
@@ -324,18 +407,38 @@ export default function Orders() {
                             ]}
                           />
                           <View style={styles.timelineContent}>
-                            <Text style={styles.timelineStatus}>
+                            <Text
+                              style={[
+                                styles.timelineStatus,
+                                { color: theme.text },
+                              ]}
+                            >
                               {event.status}
                             </Text>
-                            <Text style={styles.timelineLocation}>
+                            <Text
+                              style={[
+                                styles.timelineLocation,
+                                { color: theme.icon },
+                              ]}
+                            >
                               {event.location}
                             </Text>
-                            <Text style={styles.timelineTimestamp}>
+                            <Text
+                              style={[
+                                styles.timelineTimestamp,
+                                { color: theme.icon },
+                              ]}
+                            >
                               {event.timestamp}
                             </Text>
                           </View>
                           {index !== timeline.length - 1 && (
-                            <View style={styles.timelineLine} />
+                            <View
+                              style={[
+                                styles.timelineLine,
+                                { backgroundColor: theme.border },
+                              ]}
+                            />
                           )}
                         </View>
                       ))}
@@ -344,10 +447,16 @@ export default function Orders() {
                 </View>
               )}
 
-              <View style={styles.orderFooter}>
+              <View
+                style={[styles.orderFooter, { borderTopColor: theme.border }]}
+              >
                 <View style={styles.totalContainer}>
-                  <Text style={styles.totalLabel}>Order Total</Text>
-                  <Text style={styles.totalAmount}>₹{order.total}</Text>
+                  <Text style={[styles.totalLabel, { color: theme.icon }]}>
+                    Order Total
+                  </Text>
+                  <Text style={[styles.totalAmount, { color: theme.text }]}>
+                    ₹{order.total}
+                  </Text>
                 </View>
                 <TouchableOpacity
                   style={styles.detailsButton}
@@ -398,6 +507,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderBottomWidth: 1,
     borderBottomColor: "#f0f0f0",
+    flexDirection: "row",
+    alignItems: "center",
   },
   headerTitle: {
     fontSize: 24,

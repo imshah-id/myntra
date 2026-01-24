@@ -10,12 +10,13 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Heart, ShoppingBag } from "lucide-react-native";
+import { Heart, ShoppingBag, ArrowLeft } from "lucide-react-native";
 import React from "react";
 import { useAuth } from "@/context/AuthContext";
 import axios from "axios";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { RecommendationCarousel } from "@/components/RecommendationCarousel";
+import { useTheme } from "../../hooks/useTheme";
 
 export default function ProductDetails() {
   const { id } = useLocalSearchParams();
@@ -30,7 +31,9 @@ export default function ProductDetails() {
   const { user } = useAuth();
   const [product, setproduct] = useState<any>(null);
   const [iswishlist, setiswishlist] = useState(false);
+
   const { addToRecentlyViewed } = useRecentlyViewed();
+  const { theme } = useTheme();
 
   useEffect(() => {
     // Simulate loading time
@@ -79,8 +82,8 @@ export default function ProductDetails() {
 
   if (!product) {
     return (
-      <View style={styles.container}>
-        <Text>Product not found</Text>
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <Text style={{ color: theme.text }}>Product not found</Text>
       </View>
     );
   }
@@ -143,14 +146,26 @@ export default function ProductDetails() {
 
   if (isLoading) {
     return (
-      <View style={styles.loaderContainer}>
+      <View
+        style={[styles.loaderContainer, { backgroundColor: theme.background }]}
+      >
         <ActivityIndicator size="large" color="#ff3f6c" />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      {/* Floating Header */}
+      <View style={styles.topHeader}>
+        <TouchableOpacity
+          style={[styles.backButton, { backgroundColor: theme.background }]}
+          onPress={() => router.back()}
+        >
+          <ArrowLeft size={24} color={theme.text} />
+        </TouchableOpacity>
+      </View>
+
       <ScrollView>
         <View style={styles.carouselContainer}>
           <ScrollView
@@ -186,8 +201,12 @@ export default function ProductDetails() {
         <View style={styles.content}>
           <View style={styles.header}>
             <View>
-              <Text style={styles.brand}>{product.brand}</Text>
-              <Text style={styles.name}>{product.name}</Text>
+              <Text style={[styles.brand, { color: theme.icon }]}>
+                {product.brand}
+              </Text>
+              <Text style={[styles.name, { color: theme.text }]}>
+                {product.name}
+              </Text>
             </View>
             <TouchableOpacity
               style={styles.wishlistButton}
@@ -202,14 +221,20 @@ export default function ProductDetails() {
           </View>
 
           <View style={styles.priceContainer}>
-            <Text style={styles.price}>₹{product.price}</Text>
+            <Text style={[styles.price, { color: theme.text }]}>
+              ₹{product.price}
+            </Text>
             <Text style={styles.discount}>{product.discount}</Text>
           </View>
 
-          <Text style={styles.description}>{product.description}</Text>
+          <Text style={[styles.description, { color: theme.icon }]}>
+            {product.description}
+          </Text>
 
           <View style={styles.sizeSection}>
-            <Text style={styles.sizeTitle}>Select Size</Text>
+            <Text style={[styles.sizeTitle, { color: theme.text }]}>
+              Select Size
+            </Text>
             <View style={styles.sizeGrid}>
               {product.sizes.map((size: any) => (
                 <TouchableOpacity
@@ -223,6 +248,7 @@ export default function ProductDetails() {
                   <Text
                     style={[
                       styles.sizeText,
+                      { color: theme.text },
                       selectedSize === size && styles.selectedSizeText,
                     ]}
                   >
@@ -237,7 +263,15 @@ export default function ProductDetails() {
         </View>
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View
+        style={[
+          styles.footer,
+          {
+            backgroundColor: theme.background,
+            borderTopColor: theme.icon,
+          },
+        ]}
+      >
         <TouchableOpacity
           style={styles.addToBagButton}
           onPress={handleAddToBag}
@@ -391,5 +425,23 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  topHeader: {
+    position: "absolute",
+    top: 40, // Adjust for status bar
+    left: 20,
+    zIndex: 10,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
   },
 });

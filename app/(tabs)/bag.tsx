@@ -151,9 +151,7 @@ export default function Bag() {
             style={[styles.loginButton, { backgroundColor: theme.tint }]}
             onPress={() => router.push("/login")}
           >
-            <Text style={[styles.loginButtonText, { color: theme.background }]}>
-              LOGIN
-            </Text>
+            <Text style={styles.loginButtonText}>LOGIN</Text>
           </TouchableOpacity>
         </View>
       </View>

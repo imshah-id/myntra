@@ -50,7 +50,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (data.fullName && token) {
         await saveUserData(data._id, data.fullName, data.email);
         await saveToken(token);
-        setUser({ _id: data._id, name: data.name, email: data.email });
+        setUser({ _id: data._id, name: data.fullName, email: data.email });
         setIsAuthenticated(true);
       } else {
         throw new Error(data.message || "Login failed");
@@ -79,7 +79,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (data.fullName && token) {
         await saveUserData(data._id, data.fullName, data.email);
         await saveToken(token);
-        setUser({ _id: data._id, name: data.name, email: data.email });
+        setUser({ _id: data._id, name: data.fullName, email: data.email });
         setIsAuthenticated(true);
       } else {
         throw new Error(data.message || "Signup failed");

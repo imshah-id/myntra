@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     top: 0,
   },
   formContainer: {
-    width: "100%",
+    width: "90%",
     maxWidth: 400,
     alignSelf: "center",
     padding: 20,
