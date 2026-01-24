@@ -151,6 +151,11 @@ export function usePushNotifications() {
   };
 
   const cancelAllNotifications = async () => {
+    // Skip on web - notification APIs not fully supported
+    if (Platform.OS === "web") {
+      console.log("Notification cancellation skipped on web platform");
+      return;
+    }
     await Notifications.cancelAllScheduledNotificationsAsync();
   };
 
