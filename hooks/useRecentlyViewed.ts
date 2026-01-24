@@ -24,19 +24,30 @@ export const useRecentlyViewed = () => {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth(); // Get user context
 
+  // Helper to get storage key based on user
+  const getStorageKey = useCallback((userId?: string) => {
+    return userId ? `recently_viewed_${userId}` : "recently_viewed_guest";
+  }, []);
+
   const loadRecentlyViewed = useCallback(async () => {
     try {
-      const jsonValue = await AsyncStorage.getItem(STORAGE_KEY);
+      setLoading(true);
+      const key = getStorageKey(user?._id);
+      const jsonValue = await AsyncStorage.getItem(key);
+
       if (jsonValue != null) {
         setRecentlyViewed(JSON.parse(jsonValue));
+      } else {
+        setRecentlyViewed([]); // Clear if nothing found for this user
       }
     } catch (e) {
       console.error("Failed to load recently viewed products", e);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user, getStorageKey]);
 
+  // Reload when user changes
   useEffect(() => {
     loadRecentlyViewed();
   }, [loadRecentlyViewed]);
@@ -44,8 +55,10 @@ export const useRecentlyViewed = () => {
   const addToRecentlyViewed = useCallback(
     async (product: Product) => {
       try {
-        // 1. Local Storage Update (Existing Logic)
-        const jsonValue = await AsyncStorage.getItem(STORAGE_KEY);
+        const key = getStorageKey(user?._id);
+
+        // 1. Local Storage Update
+        const jsonValue = await AsyncStorage.getItem(key);
         let currentList: Product[] =
           jsonValue != null ? JSON.parse(jsonValue) : [];
 
@@ -61,11 +74,10 @@ export const useRecentlyViewed = () => {
         }
 
         setRecentlyViewed(currentList);
-        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(currentList));
+        await AsyncStorage.setItem(key, JSON.stringify(currentList));
 
-        // 2. Server Side Sync (New Logic)
+        // 2. Server Side Sync
         if (user && user._id) {
-          // Fire and forget - don't block UI
           axios
             .post("https://myntrabackend-eal6.onrender.com/api/history", {
               userId: user._id,
@@ -79,8 +91,8 @@ export const useRecentlyViewed = () => {
         console.error("Failed to save recently viewed product", e);
       }
     },
-    [user],
-  ); // Add user dependency
+    [user, getStorageKey],
+  );
 
   return {
     recentlyViewed,
