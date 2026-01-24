@@ -8,12 +8,19 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { ShoppingBag, Minus, Plus, Trash2 } from "lucide-react-native";
+import {
+  ShoppingBag,
+  Minus,
+  Plus,
+  Trash2,
+  Bookmark,
+} from "lucide-react-native";
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import axios from "axios";
 import { useTheme } from "@/hooks/useTheme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SavedForLaterSection } from "@/components/SavedForLaterSection";
 
 const bagItems = [
   {
@@ -46,11 +53,16 @@ export default function Bag() {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
   const [bag, setbag] = useState<any>(null);
-  useEffect(() => {
-    // Simulate loading time
+  const [savedItems, setSavedItems] = useState<any[]>([]);
+  const [savedLoading, setSavedLoading] = useState(false);
+  const [savingItemId, setSavingItemId] = useState<string | null>(null);
+  const [movingItemId, setMovingItemId] = useState<string | null>(null);
 
+  useEffect(() => {
     fetchproduct();
+    fetchSavedItems();
   }, [user]);
+
   const fetchproduct = async () => {
     if (user) {
       try {
@@ -65,6 +77,52 @@ export default function Bag() {
       } finally {
         setIsLoading(false);
       }
+    }
+  };
+
+  const fetchSavedItems = async () => {
+    if (user) {
+      try {
+        setSavedLoading(true);
+        const response = await axios.get(
+          `https://myntrabackend-eal6.onrender.com/bag/saved-for-later/${user._id}`,
+        );
+        setSavedItems(response.data || []);
+      } catch (error) {
+        console.log("Error fetching saved items:", error);
+      } finally {
+        setSavedLoading(false);
+      }
+    }
+  };
+
+  const handleSaveForLater = async (itemId: string) => {
+    try {
+      setSavingItemId(itemId);
+      await axios.patch(
+        `https://myntrabackend-eal6.onrender.com/bag/saveforlater/${itemId}`,
+      );
+      // Refresh both lists
+      await Promise.all([fetchproduct(), fetchSavedItems()]);
+    } catch (error) {
+      console.log("Error saving for later:", error);
+    } finally {
+      setSavingItemId(null);
+    }
+  };
+
+  const handleMoveToCart = async (itemId: string) => {
+    try {
+      setMovingItemId(itemId);
+      await axios.patch(
+        `https://myntrabackend-eal6.onrender.com/bag/movetobag/${itemId}`,
+      );
+      // Refresh both lists
+      await Promise.all([fetchproduct(), fetchSavedItems()]);
+    } catch (error) {
+      console.log("Error moving to cart:", error);
+    } finally {
+      setMovingItemId(null);
     }
   };
   if (!user) {
@@ -193,9 +251,31 @@ export default function Bag() {
                   <Trash2 size={20} color={theme.tint} />
                 </TouchableOpacity>
               </View>
+
+              <TouchableOpacity
+                style={styles.saveForLaterButton}
+                onPress={() => handleSaveForLater(item._id)}
+                disabled={savingItemId === item._id}
+              >
+                {savingItemId === item._id ? (
+                  <ActivityIndicator size="small" color="#666" />
+                ) : (
+                  <>
+                    <Bookmark size={14} color="#666" />
+                    <Text style={styles.saveForLaterText}>SAVE FOR LATER</Text>
+                  </>
+                )}
+              </TouchableOpacity>
             </View>
           </View>
         ))}
+
+        <SavedForLaterSection
+          items={savedItems}
+          loading={savedLoading}
+          onMoveToCart={handleMoveToCart}
+          movingItemId={movingItemId}
+        />
       </ScrollView>
 
       <View
@@ -367,5 +447,17 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  saveForLaterButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 10,
+    paddingVertical: 8,
+    gap: 6,
+  },
+  saveForLaterText: {
+    fontSize: 12,
+    color: "#666",
+    fontWeight: "500",
   },
 });
