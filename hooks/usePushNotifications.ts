@@ -1,13 +1,26 @@
-import "@/utils/polyfill";
 import { useState, useEffect, useRef } from "react";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import Constants from "expo-constants";
 import { Platform } from "react-native";
 import axios from "axios";
+import { useAuth } from "@/context/AuthContext";
+import { getToken } from "@/utils/storage";
 
-export const usePushNotifications = () => {
-  const [expoPushToken, setExpoPushToken] = useState<string | undefined>("");
+// Configure how notifications function when the app is in foreground
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
+
+export function usePushNotifications() {
+  const { user } = useAuth();
+  const [expoPushToken, setExpoPushToken] = useState<string | undefined>(
+    undefined,
+  );
   const [notification, setNotification] = useState<
     Notifications.Notification | undefined
   >(undefined);
@@ -15,8 +28,6 @@ export const usePushNotifications = () => {
   const responseListener = useRef<Notifications.Subscription>();
 
   async function registerForPushNotificationsAsync() {
-    let token;
-
     if (Platform.OS === "android") {
       await Notifications.setNotificationChannelAsync("default", {
         name: "default",
@@ -27,10 +38,6 @@ export const usePushNotifications = () => {
     }
 
     if (Device.isDevice) {
-      if (Platform.OS === "web") {
-        console.log("Skipping push notification setup on web");
-        return;
-      }
       const { status: existingStatus } =
         await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
@@ -39,47 +46,58 @@ export const usePushNotifications = () => {
         finalStatus = status;
       }
       if (finalStatus !== "granted") {
-        alert("Failed to get push token for push notification!");
+        console.log("Failed to get push token for push notification!");
         return;
       }
-      // Learn more about projectId:
-      // https://docs.expo.dev/push-notifications/push-notifications-setup/#configure-projectid
-      // For now we assume typical EAS setup or plain Expo Go usage
+      const projectId =
+        Constants?.expoConfig?.extra?.eas?.projectId ??
+        Constants?.easConfig?.projectId;
+      if (!projectId) {
+        console.log("Project ID not found");
+      }
       try {
-        const projectId =
-          Constants?.expoConfig?.extra?.eas?.projectId ??
-          Constants?.easConfig?.projectId;
-        if (!projectId) {
-          // Fallback or explicit ID if needed, but usually getExpoPushTokenAsync works
-          // without projectId in bare workflow or simple setup if configured correctly.
-          // However, for Expo Go, projectId might be needed if using EAS.
-          // We will try without arguments first or handle error.
-        }
-        token = (
+        const pushTokenString = (
           await Notifications.getExpoPushTokenAsync({
             projectId,
           })
         ).data;
-        console.log("Expo Push Token:", token);
-      } catch (e) {
-        console.log("Error getting token:", e);
-        token = (await Notifications.getExpoPushTokenAsync()).data;
+        console.log("Expo Push Token:", pushTokenString);
+        return pushTokenString;
+      } catch (e: unknown) {
+        console.error("Error getting push token", e);
       }
     } else {
-      alert("Must use physical device for Push Notifications");
+      console.log("Must use physical device for Push Notifications");
     }
-
-    return token;
   }
+
+  // Register token with backend
+  const registerTokenWithBackend = async (token: string) => {
+    if (!user) return;
+    try {
+      const authToken = await getToken();
+      await axios.post(
+        "https://myntrabackend-eal6.onrender.com/api/notifications/register-token",
+        {
+          token,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        },
+      );
+      console.log("Push token registered with backend");
+    } catch (error) {
+      console.error("Failed to register push token with backend", error);
+    }
+  };
 
   useEffect(() => {
     registerForPushNotificationsAsync().then((token) => {
       setExpoPushToken(token);
-      if (token) {
-        // Send token to backend
-        // This is where you would call your API to register the token for the user
-        // axios.post('https://myntrabackend-eal6.onrender.com/register-token', { token });
-        console.log("Push Token generated:", token);
+      if (token && user) {
+        registerTokenWithBackend(token);
       }
     });
 
@@ -90,7 +108,11 @@ export const usePushNotifications = () => {
 
     responseListener.current =
       Notifications.addNotificationResponseReceivedListener((response) => {
-        console.log(response);
+        console.log(
+          "Notification interacted with:",
+          response.notification.request.content.data,
+        );
+        // Handle navigation based on data if needed
       });
 
     return () => {
@@ -101,10 +123,32 @@ export const usePushNotifications = () => {
       responseListener.current &&
         Notifications.removeNotificationSubscription(responseListener.current);
     };
-  }, []);
+  }, [user]);
+
+  // Local Notifications for Cart Abandonment
+  const scheduleCartReminder = async () => {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: "Items in your cart are waiting!",
+        body: "Don't forget to complete your purchase.",
+        data: { type: "cart_abandonment" },
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+        seconds: 60 * 60, // 1 hour
+        repeats: false,
+      },
+    });
+  };
+
+  const cancelAllNotifications = async () => {
+    await Notifications.cancelAllScheduledNotificationsAsync();
+  };
 
   return {
     expoPushToken,
     notification,
+    scheduleCartReminder,
+    cancelAllNotifications,
   };
-};
+}

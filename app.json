@@ -38,6 +38,13 @@
       "typedRoutes": true
     },
     "extra": {
-    }
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "a55e6c9c-5fa3-4108-92bb-6726df0f1734"
+      }
+    },
+    "owner": "theshaenix"
   }
 }

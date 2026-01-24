@@ -1,5 +1,10 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { getUserData, saveUserData, clearUserData } from "@/utils/storage";
+import {
+  getUserData,
+  saveUserData,
+  clearUserData,
+  saveToken,
+} from "@/utils/storage";
 import React from "react";
 import axios from "axios";
 type AuthContextType = {
@@ -41,8 +46,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       );
 
       const data = await res.data.user;
-      if (data.fullName) {
+      const token = await res.data.token;
+      if (data.fullName && token) {
         await saveUserData(data._id, data.fullName, data.email);
+        await saveToken(token);
         setUser({ _id: data._id, name: data.name, email: data.email });
         setIsAuthenticated(true);
       } else {
@@ -68,8 +75,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         },
       );
       const data = await res.data.user;
-      if (data.fullName) {
+      const token = await res.data.token;
+      if (data.fullName && token) {
         await saveUserData(data._id, data.fullName, data.email);
+        await saveToken(token);
         setUser({ _id: data._id, name: data.name, email: data.email });
         setIsAuthenticated(true);
       } else {

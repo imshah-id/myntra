@@ -16,6 +16,7 @@ import {
   Settings,
   LogOut,
   ChevronRight,
+  FileText,
 } from "lucide-react-native";
 import React from "react";
 import { useAuth } from "@/context/AuthContext";
@@ -24,6 +25,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const menuItems = [
   { icon: Package, label: "Orders", route: "/orders" },
+  { icon: FileText, label: "My Transactions", route: "/transactions" },
   { icon: Heart, label: "Wishlist", route: "/wishlist" },
   { icon: CreditCard, label: "Payment Methods", route: "/payments" },
   { icon: MapPin, label: "Addresses", route: "/addresses" },

@@ -25,12 +25,24 @@ Notifications.setNotificationHandler({
     shouldShowList: true,
   }),
 });
+// Separate component to use hooks that depend on AuthProvider
+function AppLayout() {
+  usePushNotifications();
+  return (
+    <>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="(auth)" />
+      </Stack>
+      <StatusBar style="auto" />
+    </>
+  );
+}
+
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
-  usePushNotifications();
 
   useEffect(() => {
     if (loaded) {
@@ -45,12 +57,7 @@ export default function RootLayout() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="(auth)" />
-          {/* <Stack.Screen name="(auth)" /> */}
-        </Stack>
-        <StatusBar style="auto" />
+        <AppLayout />
       </AuthProvider>
     </ThemeProvider>
   );

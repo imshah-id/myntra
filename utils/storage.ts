@@ -46,7 +46,14 @@ export const getUserData = async () => {
 };
 
 export const clearUserData = async () => {
-  await removeItem("userid");
-  await removeItem("userName");
   await removeItem("userEmail");
+  await removeItem("authToken");
+};
+
+export const saveToken = async (token: string) => {
+  await setItem("authToken", token);
+};
+
+export const getToken = async () => {
+  return await getItem("authToken");
 };

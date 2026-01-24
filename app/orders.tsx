@@ -8,284 +8,374 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import {
   Package,
   ChevronRight,
   MapPin,
   Truck,
   Clock,
-  Calendar,
+  CheckCircle,
+  Circle,
   CreditCard,
 } from "lucide-react-native";
 import React from "react";
 import axios from "axios";
 import { useAuth } from "@/context/AuthContext";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ORDER_STATUSES } from "@/constants/orders";
 
-const orders = [
-  {
-    id: "ORD123456",
-    date: "15 Mar 2024",
-    status: "Delivered",
-    items: [
-      {
-        id: 1,
-        name: "White Cotton T-Shirt",
-        brand: "H&M",
-        size: "L",
-        price: 799,
-        image:
-          "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&auto=format&fit=crop",
-      },
-      {
-        id: 2,
-        name: "Blue Denim Jacket",
-        brand: "Levis",
-        size: "M",
-        price: 2999,
-        image:
-          "https://images.unsplash.com/photo-1523205771623-e0faa4d2813d?w=500&auto=format&fit=crop",
-      },
-    ],
-    total: 4087,
-    shippingAddress: "123 Main Street, Apt 4B, New York, NY 10001",
-    paymentMethod: "Credit Card ending in 4242",
-    tracking: {
-      number: "TRK789012345",
-      carrier: "FedEx",
-      estimatedDelivery: "15 Mar 2024",
-      currentLocation: "New York City Hub",
-      status: "Delivered",
-      timeline: [
-        {
-          status: "Delivered",
-          location: "New York, NY",
-          timestamp: "15 Mar 2024, 14:30",
-        },
-        {
-          status: "Out for Delivery",
-          location: "New York City Hub",
-          timestamp: "15 Mar 2024, 09:15",
-        },
-        {
-          status: "Arrived at Delivery Facility",
-          location: "New York Distribution Center",
-          timestamp: "14 Mar 2024, 23:45",
-        },
-        {
-          status: "Order Shipped",
-          location: "New Jersey Warehouse",
-          timestamp: "13 Mar 2024, 16:20",
-        },
-        {
-          status: "Order Confirmed",
-          location: "Online",
-          timestamp: "12 Mar 2024, 10:00",
-        },
-      ],
-    },
-  },
-  {
-    id: "ORD123457",
-    date: "10 Mar 2024",
-    status: "Delivered",
-    items: [
-      {
-        id: 3,
-        name: "Summer Dress",
-        brand: "ONLY",
-        size: "S",
-        price: 1299,
-        image:
-          "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=500&auto=format&fit=crop",
-      },
-    ],
-    total: 1398,
-    shippingAddress: "123 Main Street, Apt 4B, New York, NY 10001",
-    paymentMethod: "Credit Card ending in 4242",
-    tracking: {
-      number: "TRK789012346",
-      carrier: "UPS",
-      estimatedDelivery: "10 Mar 2024",
-      currentLocation: "Delivered",
-      status: "Delivered",
-      timeline: [
-        {
-          status: "Delivered",
-          location: "New York, NY",
-          timestamp: "10 Mar 2024, 15:45",
-        },
-        {
-          status: "Order Shipped",
-          location: "New Jersey Warehouse",
-          timestamp: "08 Mar 2024, 11:30",
-        },
-        {
-          status: "Order Confirmed",
-          location: "Online",
-          timestamp: "07 Mar 2024, 09:15",
-        },
-      ],
-    },
-  },
-];
+// Status colors removed from here as they are now used from persistence util if needed,
+// but actually they are still here for UI.
+
+// Status colors
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case "Delivered":
+      return "#00b852";
+    case "Out for Delivery":
+      return "#ff9800";
+    case "In Transit":
+      return "#2196f3";
+    case "Shipped":
+      return "#9c27b0";
+    case "Order Confirmed":
+      return "#ff3f6c";
+    default:
+      return "#666";
+  }
+};
+
+// Generate random tracking number
+const generateTrackingNumber = () => {
+  return `TRK${Math.random().toString(36).substring(2, 12).toUpperCase()}`;
+};
+
+// Generate tracking timeline based on current status
+const generateTimeline = (currentStatus: string, orderDate: Date) => {
+  const statusIndex = ORDER_STATUSES.indexOf(currentStatus);
+  const timeline = [];
+
+  for (let i = 0; i <= statusIndex; i++) {
+    const eventDate = new Date(orderDate);
+    eventDate.setHours(eventDate.getHours() + i * 12); // 12 hours between each status
+
+    timeline.push({
+      status: ORDER_STATUSES[i],
+      location:
+        i === 0
+          ? "Online"
+          : i === statusIndex
+            ? "Your City"
+            : "Distribution Center",
+      timestamp: eventDate.toLocaleString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    });
+  }
+
+  return timeline.reverse(); // Show newest first
+};
 
 export default function Orders() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
-  const [orders, setorder] = useState<any>(null);
+  const [orders, setOrders] = useState<any[]>([]);
+
   useEffect(() => {
-    // Simulate loading time
-    const fetchorder = async () => {
+    fetchOrders();
+  }, [user]);
+
+  // Refresh orders when page comes into focus (e.g., after placing an order)
+  useFocusEffect(
+    React.useCallback(() => {
       if (user) {
-        try {
-          setIsLoading(true);
-          const product = await axios.get(
-            `https://myntrabackend-eal6.onrender.com/order/user/${user._id}`,
-          );
-          setorder(product.data);
-        } catch (error) {
-          console.log(error);
-          setIsLoading(false);
-        } finally {
-          setIsLoading(false);
-        }
+        fetchOrders();
       }
-    };
-    fetchorder();
-  }, []);
-   if (isLoading) {
-      return (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#ff3f6c" />
-        </View>
+    }, [user]),
+  );
+
+  const fetchOrders = async () => {
+    if (!user) return;
+
+    try {
+      setIsLoading(true);
+      const response = await axios.get(
+        `https://myntrabackend-eal6.onrender.com/order/user/${user._id}`,
       );
+
+      const fetchedOrders = response.data || [];
+      // Sort newest first
+      fetchedOrders.sort(
+        (a: any, b: any) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+
+      setOrders(fetchedOrders);
+    } catch (error) {
+      console.error("Failed to fetch orders", error);
+    } finally {
+      setIsLoading(false);
     }
+  };
+
   const toggleOrderDetails = (orderId: string) => {
     setExpandedOrder(expandedOrder === orderId ? null : orderId);
   };
-  if (!orders) {
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  if (isLoading) {
     return (
-      <View style={styles.container}>
-        <Text>Order not found</Text>
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#ff3f6c" />
       </View>
     );
   }
+
+  if (!orders || orders.length === 0) {
+    return (
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>My Orders</Text>
+        </View>
+        <View style={styles.emptyState}>
+          <Package size={64} color="#ccc" />
+          <Text style={styles.emptyText}>No orders found</Text>
+          <Text style={styles.emptySubtext}>
+            Your orders will appear here once you make a purchase
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>My Orders</Text>
+        <Text style={styles.headerSubtitle}>{orders.length} orders</Text>
       </View>
 
       <ScrollView style={styles.content}>
-        {orders.map((order:any) => (
-          <View key={order._id} style={styles.orderCard}>
-            <TouchableOpacity
-              style={styles.orderHeader}
-              onPress={() => toggleOrderDetails(order._id)}
-            >
-              <View>
-                <Text style={styles.orderId}>Order #{order._id}</Text>
-                <Text style={styles.orderDate}>{order.date}</Text>
-              </View>
-              <View style={styles.statusContainer}>
-                <Package size={16} color="#00b852" />
-                <Text style={styles.orderStatus}>{order.status}</Text>
-              </View>
-            </TouchableOpacity>
+        {orders.map((order: any) => {
+          const currentStatus = order.status || "Order Confirmed";
+          const statusColor = getStatusColor(currentStatus);
+          const trackingNumber = generateTrackingNumber();
+          const timeline = generateTimeline(
+            currentStatus,
+            new Date(order.createdAt),
+          );
 
-            <View style={styles.itemsContainer}>
-              {order.items.map((item:any) => (
-                <View key={item._id} style={styles.orderItem}>
-                  <Image
-                    source={{ uri: item.productId.images }}
-                    style={styles.itemImage}
-                  />
-                  <View style={styles.itemInfo}>
-                    <Text style={styles.brandName}>{item.productId.brand}</Text>
-                    <Text style={styles.itemName}>{item.productId.name}</Text>
-                    <Text style={styles.itemPrice}>₹{item.productId.price}</Text>
-                  </View>
-                </View>
-              ))}
-            </View>
-
-            {expandedOrder === order._id && (
-              <View style={styles.orderDetails}>
-                <View style={styles.detailSection}>
-                  <View style={styles.detailHeader}>
-                    <MapPin size={20} color="#3e3e3e" />
-                    <Text style={styles.detailTitle}>Shipping Address</Text>
-                  </View>
-                  <Text style={styles.detailText}>{order.shippingAddress}</Text>
-                </View>
-
-                <View style={styles.detailSection}>
-                  <View style={styles.detailHeader}>
-                    <CreditCard size={20} color="#3e3e3e" />
-                    <Text style={styles.detailTitle}>Payment Method</Text>
-                  </View>
-                  <Text style={styles.detailText}>{order.paymentMethod}</Text>
-                </View>
-
-                <View style={styles.detailSection}>
-                  <View style={styles.detailHeader}>
-                    <Truck size={20} color="#3e3e3e" />
-                    <Text style={styles.detailTitle}>Tracking Information</Text>
-                  </View>
-                  <View style={styles.trackingInfo}>
-                    <Text style={styles.trackingNumber}>
-                      Tracking Number: {order.tracking.number}
-                    </Text>
-                    <Text style={styles.trackingCarrier}>
-                      Carrier: {order.tracking.carrier}
-                    </Text>
-                  </View>
-
-                  <View style={styles.timeline}>
-                    {order.tracking.timeline.map((event:any, index:any) => (
-                      <View key={index} style={styles.timelineEvent}>
-                        <View style={styles.timelinePoint} />
-                        <View style={styles.timelineContent}>
-                          <Text style={styles.timelineStatus}>
-                            {event.status}
-                          </Text>
-                          <Text style={styles.timelineLocation}>
-                            {event.location}
-                          </Text>
-                          <Text style={styles.timelineTimestamp}>
-                            {event.timestamp}
-                          </Text>
-                        </View>
-                        {index !== order.tracking.timeline.length - 1 && (
-                          <View style={styles.timelineLine} />
-                        )}
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              </View>
-            )}
-
-            <View style={styles.orderFooter}>
-              <View style={styles.totalContainer}>
-                <Text style={styles.totalLabel}>Order Total</Text>
-                <Text style={styles.totalAmount}>₹{order.total}</Text>
-              </View>
+          return (
+            <View key={order._id} style={styles.orderCard}>
               <TouchableOpacity
-                style={styles.detailsButton}
+                style={styles.orderHeader}
                 onPress={() => toggleOrderDetails(order._id)}
               >
-                <Text style={styles.detailsButtonText}>
-                  {expandedOrder === order._id ? "Hide Details" : "View Details"}
-                </Text>
-                <ChevronRight size={20} color="#ff3f6c" />
+                <View>
+                  <Text style={styles.orderId}>
+                    Order #{order._id.slice(-8)}
+                  </Text>
+                  <Text style={styles.orderDate}>
+                    {formatDate(order.createdAt)}
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.statusBadge,
+                    { backgroundColor: `${statusColor}15` },
+                  ]}
+                >
+                  <View
+                    style={[styles.statusDot, { backgroundColor: statusColor }]}
+                  />
+                  <Text style={[styles.orderStatus, { color: statusColor }]}>
+                    {currentStatus}
+                  </Text>
+                </View>
               </TouchableOpacity>
+
+              <View style={styles.itemsContainer}>
+                {order.items.map((item: any) => (
+                  <View key={item._id} style={styles.orderItem}>
+                    <Image
+                      source={{ uri: item.productId.images[0] }}
+                      style={styles.itemImage}
+                    />
+                    <View style={styles.itemInfo}>
+                      <Text style={styles.brandName}>
+                        {item.productId.brand}
+                      </Text>
+                      <Text style={styles.itemName} numberOfLines={2}>
+                        {item.productId.name}
+                      </Text>
+                      <Text style={styles.itemDetails}>
+                        Size: {item.size} | Qty: {item.quantity}
+                      </Text>
+                      <Text style={styles.itemPrice}>
+                        ₹{item.productId.price}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+
+              {expandedOrder === order._id && (
+                <View style={styles.orderDetails}>
+                  {/* Shipping Address */}
+                  <View style={styles.detailSection}>
+                    <View style={styles.detailHeader}>
+                      <MapPin size={20} color="#ff3f6c" />
+                      <Text style={styles.detailTitle}>Shipping Address</Text>
+                    </View>
+                    <Text style={styles.detailText}>
+                      {order.shippingAddress}
+                    </Text>
+                  </View>
+
+                  {/* Payment Method */}
+                  <View style={styles.detailSection}>
+                    <View style={styles.detailHeader}>
+                      <CreditCard size={20} color="#ff3f6c" />
+                      <Text style={styles.detailTitle}>Payment Method</Text>
+                    </View>
+                    <Text style={styles.detailText}>{order.paymentMethod}</Text>
+                  </View>
+
+                  {/* Tracking Information */}
+                  <View style={styles.detailSection}>
+                    <View style={styles.detailHeader}>
+                      <Truck size={20} color="#ff3f6c" />
+                      <Text style={styles.detailTitle}>Order Tracking</Text>
+                    </View>
+                    <View style={styles.trackingInfo}>
+                      <Text style={styles.trackingNumber}>
+                        Tracking: {trackingNumber}
+                      </Text>
+                      <Text style={styles.trackingCarrier}>
+                        Carrier: {Math.random() > 0.5 ? "FedEx" : "DHL Express"}
+                      </Text>
+                    </View>
+
+                    {/* Progress Bar */}
+                    <View style={styles.progressContainer}>
+                      {ORDER_STATUSES.map((status, index) => {
+                        const isCompleted =
+                          ORDER_STATUSES.indexOf(currentStatus) >= index;
+                        return (
+                          <View key={status} style={styles.progressStep}>
+                            <View style={styles.progressIconContainer}>
+                              {isCompleted ? (
+                                <CheckCircle size={24} color={statusColor} />
+                              ) : (
+                                <Circle size={24} color="#e0e0e0" />
+                              )}
+                              {index < ORDER_STATUSES.length - 1 && (
+                                <View
+                                  style={[
+                                    styles.progressLine,
+                                    isCompleted && {
+                                      backgroundColor: statusColor,
+                                    },
+                                  ]}
+                                />
+                              )}
+                            </View>
+                            <Text
+                              style={[
+                                styles.progressLabel,
+                                isCompleted && {
+                                  color: statusColor,
+                                  fontWeight: "600",
+                                },
+                              ]}
+                            >
+                              {status}
+                            </Text>
+                          </View>
+                        );
+                      })}
+                    </View>
+
+                    {/* Timeline */}
+                    <View style={styles.timeline}>
+                      <Text style={styles.timelineTitle}>Order History</Text>
+                      {timeline.map((event: any, index: number) => (
+                        <View key={index} style={styles.timelineEvent}>
+                          <View
+                            style={[
+                              styles.timelinePoint,
+                              { backgroundColor: statusColor },
+                            ]}
+                          />
+                          <View style={styles.timelineContent}>
+                            <Text style={styles.timelineStatus}>
+                              {event.status}
+                            </Text>
+                            <Text style={styles.timelineLocation}>
+                              {event.location}
+                            </Text>
+                            <Text style={styles.timelineTimestamp}>
+                              {event.timestamp}
+                            </Text>
+                          </View>
+                          {index !== timeline.length - 1 && (
+                            <View style={styles.timelineLine} />
+                          )}
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                </View>
+              )}
+
+              <View style={styles.orderFooter}>
+                <View style={styles.totalContainer}>
+                  <Text style={styles.totalLabel}>Order Total</Text>
+                  <Text style={styles.totalAmount}>₹{order.total}</Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.detailsButton}
+                  onPress={() => toggleOrderDetails(order._id)}
+                >
+                  <Text style={styles.detailsButtonText}>
+                    {expandedOrder === order._id
+                      ? "Hide Details"
+                      : "View Details"}
+                  </Text>
+                  <ChevronRight
+                    size={20}
+                    color="#ff3f6c"
+                    style={{
+                      transform: [
+                        {
+                          rotate:
+                            expandedOrder === order._id ? "90deg" : "0deg",
+                        },
+                      ],
+                    }}
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-        ))}
+          );
+        })}
+        <View style={{ height: 20 }} />
       </ScrollView>
     </View>
   );
@@ -313,6 +403,29 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     color: "#3e3e3e",
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 4,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 40,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#3e3e3e",
+    marginTop: 20,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: "#999",
+    marginTop: 8,
+    textAlign: "center",
   },
   content: {
     flex: 1,
@@ -350,18 +463,22 @@ const styles = StyleSheet.create({
     color: "#666",
     marginTop: 2,
   },
-  statusContainer: {
+  statusBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#e6f4ea",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 15,
   },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
+  },
   orderStatus: {
-    fontSize: 14,
-    color: "#00b852",
-    marginLeft: 5,
+    fontSize: 13,
+    fontWeight: "600",
   },
   itemsContainer: {
     padding: 15,
@@ -389,10 +506,10 @@ const styles = StyleSheet.create({
     color: "#3e3e3e",
     marginBottom: 2,
   },
-  itemSize: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 2,
+  itemDetails: {
+    fontSize: 13,
+    color: "#999",
+    marginBottom: 4,
   },
   itemPrice: {
     fontSize: 16,
@@ -435,8 +552,37 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
   },
+  progressContainer: {
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  progressStep: {
+    marginBottom: 15,
+  },
+  progressIconContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  progressLine: {
+    flex: 1,
+    height: 2,
+    backgroundColor: "#e0e0e0",
+    marginLeft: 8,
+  },
+  progressLabel: {
+    fontSize: 13,
+    color: "#666",
+    marginLeft: 32,
+  },
   timeline: {
-    marginTop: 15,
+    marginTop: 20,
+  },
+  timelineTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#3e3e3e",
+    marginBottom: 15,
   },
   timelineEvent: {
     flexDirection: "row",
