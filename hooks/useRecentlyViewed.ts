@@ -14,9 +14,15 @@ export interface Product {
   discount?: string;
 }
 
+import { useAuth } from "@/context/AuthContext";
+import axios from "axios";
+
+// ... previous imports
+
 export const useRecentlyViewed = () => {
   const [recentlyViewed, setRecentlyViewed] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth(); // Get user context
 
   const loadRecentlyViewed = useCallback(async () => {
     try {
@@ -35,29 +41,46 @@ export const useRecentlyViewed = () => {
     loadRecentlyViewed();
   }, [loadRecentlyViewed]);
 
-  const addToRecentlyViewed = useCallback(async (product: Product) => {
-    try {
-      const jsonValue = await AsyncStorage.getItem(STORAGE_KEY);
-      let currentList: Product[] =
-        jsonValue != null ? JSON.parse(jsonValue) : [];
+  const addToRecentlyViewed = useCallback(
+    async (product: Product) => {
+      try {
+        // 1. Local Storage Update (Existing Logic)
+        const jsonValue = await AsyncStorage.getItem(STORAGE_KEY);
+        let currentList: Product[] =
+          jsonValue != null ? JSON.parse(jsonValue) : [];
 
-      // Remove if already exists to move it to the top
-      currentList = currentList.filter((item) => item._id !== product._id);
+        // Remove if already exists to move it to the top
+        currentList = currentList.filter((item) => item._id !== product._id);
 
-      // Add to the front
-      currentList.unshift(product);
+        // Add to the front
+        currentList.unshift(product);
 
-      // Limit size
-      if (currentList.length > MAX_ITEMS) {
-        currentList = currentList.slice(0, MAX_ITEMS);
+        // Limit size
+        if (currentList.length > MAX_ITEMS) {
+          currentList = currentList.slice(0, MAX_ITEMS);
+        }
+
+        setRecentlyViewed(currentList);
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(currentList));
+
+        // 2. Server Side Sync (New Logic)
+        if (user && user._id) {
+          // Fire and forget - don't block UI
+          axios
+            .post("https://myntrabackend-eal6.onrender.com/api/history", {
+              userId: user._id,
+              productId: product._id,
+            })
+            .catch((err) =>
+              console.log("Failed to sync history to backend:", err),
+            );
+        }
+      } catch (e) {
+        console.error("Failed to save recently viewed product", e);
       }
-
-      setRecentlyViewed(currentList);
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(currentList));
-    } catch (e) {
-      console.error("Failed to save recently viewed product", e);
-    }
-  }, []);
+    },
+    [user],
+  ); // Add user dependency
 
   return {
     recentlyViewed,

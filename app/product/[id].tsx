@@ -15,6 +15,7 @@ import React from "react";
 import { useAuth } from "@/context/AuthContext";
 import axios from "axios";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
+import { RecommendationCarousel } from "@/components/RecommendationCarousel";
 
 export default function ProductDetails() {
   const { id } = useLocalSearchParams();
@@ -231,6 +232,8 @@ export default function ProductDetails() {
               ))}
             </View>
           </View>
+
+          <RecommendationCarousel currentProductId={id as string} />
         </View>
       </ScrollView>
 
