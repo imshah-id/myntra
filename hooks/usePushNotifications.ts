@@ -28,6 +28,15 @@ export function usePushNotifications() {
   const responseListener = useRef<Notifications.Subscription>();
 
   async function registerForPushNotificationsAsync() {
+    // Web push notifications require additional setup (VAPID keys, service worker)
+    // and are not fully supported in Expo managed workflow. Skip for now on web.
+    if (Platform.OS === "web") {
+      console.log(
+        "Push notifications are not supported on web in this configuration.",
+      );
+      return;
+    }
+
     if (Platform.OS === "android") {
       await Notifications.setNotificationChannelAsync("default", {
         name: "default",
