@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
+import { Image } from "expo-image";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  Image,
   TouchableOpacity,
   ActivityIndicator,
   useWindowDimensions,
@@ -108,7 +108,8 @@ export const RecommendationCarousel: React.FC<RecommendationCarouselProps> = ({
             <Image
               source={{ uri: item.images[0] }}
               style={[styles.image, { backgroundColor: theme.surface }]}
-              resizeMode="cover"
+              contentFit="cover"
+              transition={200}
             />
             <View style={styles.info}>
               <Text

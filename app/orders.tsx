@@ -290,7 +290,7 @@ export default function Orders() {
                         Size: {item.size} | Qty: {item.quantity}
                       </Text>
                       <Text style={[styles.itemPrice, { color: theme.text }]}>
-                        ₹{item.productId.price}
+                        ₹{item.price}
                       </Text>
                     </View>
                   </View>

@@ -41,7 +41,7 @@ export const CustomAlert: React.FC<CustomAlertProps> = ({
             <View
               style={[
                 styles.alertContainer,
-                { backgroundColor: theme.surface, shadowColor: theme.icon },
+                { backgroundColor: theme.background, shadowColor: theme.icon },
               ]}
             >
               <Text style={[styles.title, { color: theme.text }]}>{title}</Text>
@@ -52,9 +52,7 @@ export const CustomAlert: React.FC<CustomAlertProps> = ({
                 style={[styles.button, { backgroundColor: theme.tint }]}
                 onPress={onClose}
               >
-                <Text style={[styles.buttonText, { color: theme.background }]}>
-                  OK
-                </Text>
+                <Text style={[styles.buttonText, { color: "white" }]}>OK</Text>
               </TouchableOpacity>
             </View>
           </TouchableWithoutFeedback>

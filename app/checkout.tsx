@@ -11,10 +11,10 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
 } from "react-native";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useTheme } from "@/hooks/useTheme";
+import { CustomAlert } from "@/components/CustomAlert";
 
 export default function Checkout() {
   const [loading, setLoading] = useState(false);
@@ -46,6 +46,21 @@ export default function Checkout() {
   const [tax, setTax] = useState(0);
   const [total, setTotal] = useState(0);
 
+  // Custom Alert State
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    title: "",
+    message: "",
+  });
+
+  const showAlert = (title: string, message: string) => {
+    setAlertConfig({ visible: true, title, message });
+  };
+
+  const hideAlert = () => {
+    setAlertConfig({ ...alertConfig, visible: false });
+  };
+
   useEffect(() => {
     fetchBag();
   }, [user]);
@@ -75,7 +90,7 @@ export default function Checkout() {
       setBag(response.data || []);
     } catch (error) {
       console.error("Failed to fetch bag", error);
-      Alert.alert("Error", "Failed to load cart items");
+      showAlert("Error", "Failed to load cart items");
     } finally {
       setBagLoading(false);
     }
@@ -83,41 +98,41 @@ export default function Checkout() {
 
   const validateForm = () => {
     if (!fullName.trim()) {
-      Alert.alert("Validation Error", "Please enter your full name");
+      showAlert("Validation Error", "Please enter your full name");
       return false;
     }
     if (!addressLine1.trim()) {
-      Alert.alert("Validation Error", "Please enter your address");
+      showAlert("Validation Error", "Please enter your address");
       return false;
     }
     if (!city.trim()) {
-      Alert.alert("Validation Error", "Please enter your city");
+      showAlert("Validation Error", "Please enter your city");
       return false;
     }
     if (!state.trim()) {
-      Alert.alert("Validation Error", "Please enter your state");
+      showAlert("Validation Error", "Please enter your state");
       return false;
     }
     if (!postalCode.trim()) {
-      Alert.alert("Validation Error", "Please enter your postal code");
+      showAlert("Validation Error", "Please enter your postal code");
       return false;
     }
     if (!country.trim()) {
-      Alert.alert("Validation Error", "Please enter your country");
+      showAlert("Validation Error", "Please enter your country");
       return false;
     }
 
     if (paymentMode === "Online") {
       if (!cardNumber.trim()) {
-        Alert.alert("Validation Error", "Please enter card number");
+        showAlert("Validation Error", "Please enter card number");
         return false;
       }
       if (!expiryDate.trim()) {
-        Alert.alert("Validation Error", "Please enter expiry date");
+        showAlert("Validation Error", "Please enter expiry date");
         return false;
       }
       if (!cvv.trim()) {
-        Alert.alert("Validation Error", "Please enter CVV");
+        showAlert("Validation Error", "Please enter CVV");
         return false;
       }
     }
@@ -136,7 +151,7 @@ export default function Checkout() {
     }
 
     if (bag.length === 0) {
-      Alert.alert("Error", "Your cart is empty");
+      showAlert("Error", "Your cart is empty");
       return;
     }
 
@@ -184,11 +199,11 @@ export default function Checkout() {
       );
 
       await cancelAllNotifications();
-      Alert.alert("Success", "Order placed successfully!");
+      showAlert("Success", "Order placed successfully!");
       router.push("/orders");
     } catch (error) {
       console.error("Order placement failed", error);
-      Alert.alert("Error", "Failed to place order. Please try again.");
+      showAlert("Error", "Failed to place order. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -214,8 +229,10 @@ export default function Checkout() {
 
   if (bagLoading) {
     return (
-      <View style={styles.centerContent}>
-        <ActivityIndicator size="large" color="#ff3f6c" />
+      <View
+        style={[styles.centerContent, { backgroundColor: theme.background }]}
+      >
+        <ActivityIndicator size="large" color={theme.tint} />
       </View>
     );
   }
@@ -497,6 +514,12 @@ export default function Checkout() {
           )}
         </TouchableOpacity>
       </View>
+      <CustomAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        onClose={hideAlert}
+      />
     </View>
   );
 }

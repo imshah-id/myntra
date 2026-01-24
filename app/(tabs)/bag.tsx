@@ -1,13 +1,13 @@
+import { Image } from "expo-image";
 import {
   View,
   Text,
   ScrollView,
-  Image,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import {
   ShoppingBag,
   Minus,
@@ -15,12 +15,11 @@ import {
   Trash2,
   Bookmark,
 } from "lucide-react-native";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import axios from "axios";
 import { useTheme } from "@/hooks/useTheme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { SavedForLaterSection } from "@/components/SavedForLaterSection";
 
 const bagItems = [
   {
@@ -53,15 +52,13 @@ export default function Bag() {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
   const [bag, setbag] = useState<any>(null);
-  const [savedItems, setSavedItems] = useState<any[]>([]);
-  const [savedLoading, setSavedLoading] = useState(false);
   const [savingItemId, setSavingItemId] = useState<string | null>(null);
-  const [movingItemId, setMovingItemId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchproduct();
-    fetchSavedItems();
-  }, [user]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchproduct();
+    }, [user]),
+  );
 
   const fetchproduct = async () => {
     if (user) {
@@ -80,30 +77,15 @@ export default function Bag() {
     }
   };
 
-  const fetchSavedItems = async () => {
-    if (user) {
-      try {
-        setSavedLoading(true);
-        const response = await axios.get(
-          `https://myntrabackend-eal6.onrender.com/bag/saved-for-later/${user._id}`,
-        );
-        setSavedItems(response.data || []);
-      } catch (error) {
-        console.log("Error fetching saved items:", error);
-      } finally {
-        setSavedLoading(false);
-      }
-    }
-  };
-
   const handleSaveForLater = async (itemId: string) => {
     try {
       setSavingItemId(itemId);
+      // Updated endpoint: /saved/add/:itemid (was bagging/saveforlater)
       await axios.patch(
-        `https://myntrabackend-eal6.onrender.com/bag/saveforlater/${itemId}`,
+        `https://myntrabackend-eal6.onrender.com/saved/add/${itemId}`,
       );
-      // Refresh both lists
-      await Promise.all([fetchproduct(), fetchSavedItems()]);
+      // Refresh bag list
+      await fetchproduct();
     } catch (error) {
       console.log("Error saving for later:", error);
     } finally {
@@ -111,20 +93,6 @@ export default function Bag() {
     }
   };
 
-  const handleMoveToCart = async (itemId: string) => {
-    try {
-      setMovingItemId(itemId);
-      await axios.patch(
-        `https://myntrabackend-eal6.onrender.com/bag/movetobag/${itemId}`,
-      );
-      // Refresh both lists
-      await Promise.all([fetchproduct(), fetchSavedItems()]);
-    } catch (error) {
-      console.log("Error moving to cart:", error);
-    } finally {
-      setMovingItemId(null);
-    }
-  };
   if (!user) {
     return (
       <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -151,7 +119,9 @@ export default function Bag() {
             style={[styles.loginButton, { backgroundColor: theme.tint }]}
             onPress={() => router.push("/login")}
           >
-            <Text style={styles.loginButtonText}>LOGIN</Text>
+            <Text style={[styles.loginButtonText, { color: theme.background }]}>
+              LOGIN
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -159,8 +129,10 @@ export default function Bag() {
   }
   if (isLoading) {
     return (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#ff3f6c" />
+      <View
+        style={[styles.loaderContainer, { backgroundColor: theme.background }]}
+      >
+        <ActivityIndicator size="large" color={theme.tint} />
       </View>
     );
   }
@@ -190,9 +162,20 @@ export default function Bag() {
           },
         ]}
       >
-        <Text style={[styles.headerTitle, { color: theme.text }]}>
-          Shopping Bag
-        </Text>
+        <View style={styles.headerTop}>
+          <Text style={[styles.headerTitle, { color: theme.text }]}>
+            Shopping Bag
+          </Text>
+          <TouchableOpacity
+            style={[styles.savedButton, { backgroundColor: theme.surface }]}
+            onPress={() => router.push("/saved")}
+          >
+            <Bookmark size={20} color={theme.tint} />
+            <Text style={[styles.savedButtonText, { color: theme.tint }]}>
+              Saved
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView style={styles.content}>
@@ -207,6 +190,8 @@ export default function Bag() {
             <Image
               source={{ uri: item.productId.images[0] }}
               style={styles.itemImage}
+              contentFit="cover"
+              transition={200}
             />
             <View style={styles.itemInfo}>
               <Text style={[styles.brandName, { color: theme.icon }]}>
@@ -251,29 +236,26 @@ export default function Bag() {
               </View>
 
               <TouchableOpacity
-                style={styles.saveForLaterButton}
+                style={[styles.saveForLaterButton, { borderColor: theme.tint }]}
                 onPress={() => handleSaveForLater(item._id)}
                 disabled={savingItemId === item._id}
               >
                 {savingItemId === item._id ? (
-                  <ActivityIndicator size="small" color="#666" />
+                  <ActivityIndicator size="small" color={theme.tint} />
                 ) : (
                   <>
-                    <Bookmark size={14} color="#666" />
-                    <Text style={styles.saveForLaterText}>SAVE FOR LATER</Text>
+                    <Bookmark size={14} color={theme.tint} />
+                    <Text
+                      style={[styles.saveForLaterText, { color: theme.tint }]}
+                    >
+                      SAVE FOR LATER
+                    </Text>
                   </>
                 )}
               </TouchableOpacity>
             </View>
           </View>
         ))}
-
-        <SavedForLaterSection
-          items={savedItems}
-          loading={savedLoading}
-          onMoveToCart={handleMoveToCart}
-          movingItemId={movingItemId}
-        />
       </ScrollView>
 
       <View
@@ -291,10 +273,14 @@ export default function Bag() {
           </Text>
         </View>
         <TouchableOpacity
-          style={styles.checkoutButton}
+          style={[styles.checkoutButton, { backgroundColor: theme.tint }]}
           onPress={() => router.push("/checkout")}
         >
-          <Text style={styles.checkoutButtonText}>PLACE ORDER</Text>
+          <Text
+            style={[styles.checkoutButtonText, { color: theme.background }]}
+          >
+            PLACE ORDER
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -306,23 +292,17 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#fff",
   },
   container: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   header: {
     padding: 15,
-    // paddingTop: 50,
-    backgroundColor: "#fff",
     borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#3e3e3e",
   },
   content: {
     flex: 1,
@@ -336,33 +316,22 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 18,
-    color: "#3e3e3e",
     marginTop: 20,
     marginBottom: 20,
   },
   loginButton: {
-    backgroundColor: "#ff3f6c",
     paddingHorizontal: 40,
     paddingVertical: 15,
     borderRadius: 10,
   },
   loginButtonText: {
-    color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
   },
   bagItem: {
     flexDirection: "row",
-    backgroundColor: "#fff",
     borderRadius: 10,
     marginBottom: 15,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
     elevation: 5,
     overflow: "hidden",
   },
@@ -403,7 +372,6 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: "#f5f5f5",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -416,9 +384,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     padding: 15,
-    backgroundColor: "#fff",
     borderTopWidth: 1,
-    borderTopColor: "#f0f0f0",
   },
   totalContainer: {
     flexDirection: "row",
@@ -428,15 +394,12 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     fontSize: 16,
-    color: "#3e3e3e",
   },
   totalAmount: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#3e3e3e",
   },
   checkoutButton: {
-    backgroundColor: "#ff3f6c",
     padding: 15,
     borderRadius: 10,
     alignItems: "center",
@@ -449,13 +412,39 @@ const styles = StyleSheet.create({
   saveForLaterButton: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 10,
+    marginTop: 15,
     paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    borderWidth: 1,
+    alignSelf: "flex-start",
     gap: 6,
   },
   saveForLaterText: {
     fontSize: 12,
-    color: "#666",
-    fontWeight: "500",
+    fontWeight: "600",
+  },
+  total: {
+    borderTopWidth: 1,
+    marginTop: 10,
+    paddingTop: 10,
+  },
+  headerTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  savedButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    padding: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "transparent",
+  },
+  savedButtonText: {
+    fontWeight: "600",
+    fontSize: 14,
   },
 });

@@ -26,16 +26,20 @@ Notifications.setNotificationHandler({
     shouldShowList: true,
   }),
 });
+import { useTheme } from "../context/ThemeContext";
+
 // Separate component to use hooks that depend on AuthProvider
 function AppLayout() {
   usePushNotifications();
+  const { colorScheme } = useTheme();
+
   return (
     <>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="(auth)" />
       </Stack>
-      <StatusBar style="auto" />
+      <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
     </>
   );
 }

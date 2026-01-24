@@ -26,6 +26,7 @@ import { useTheme } from "@/hooks/useTheme";
 
 export default function TabTwoScreen() {
   const router = useRouter();
+  const { theme } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(
@@ -52,8 +53,10 @@ export default function TabTwoScreen() {
   }, []);
   if (isLoading) {
     return (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#ff3f6c" />
+      <View
+        style={[styles.loaderContainer, { backgroundColor: theme.background }]}
+      >
+        <ActivityIndicator size="large" color={theme.tint} />
       </View>
     );
   }
@@ -83,8 +86,6 @@ export default function TabTwoScreen() {
     setSelectedSubcategory(subcategoryId);
     setSearchQuery("");
   };
-  /* Hook moved up */
-  const { theme } = useTheme();
 
   const filtercategories = categories?.filter(
     (category: any) =>

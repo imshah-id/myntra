@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
+import { Image } from "expo-image";
 import {
   View,
   Text,
-  Image,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
@@ -17,6 +17,7 @@ import axios from "axios";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { RecommendationCarousel } from "@/components/RecommendationCarousel";
 import { useTheme } from "../../hooks/useTheme";
+import { CustomAlert } from "@/components/CustomAlert";
 
 export default function ProductDetails() {
   const { id } = useLocalSearchParams();
@@ -34,6 +35,21 @@ export default function ProductDetails() {
 
   const { addToRecentlyViewed } = useRecentlyViewed();
   const { theme } = useTheme();
+
+  // Custom Alert State
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    title: "",
+    message: "",
+  });
+
+  const showAlert = (title: string, message: string) => {
+    setAlertConfig({ visible: true, title, message });
+  };
+
+  const hideAlert = () => {
+    setAlertConfig({ ...alertConfig, visible: false });
+  };
 
   useEffect(() => {
     // Simulate loading time
@@ -111,8 +127,10 @@ export default function ProductDetails() {
     }
 
     if (!selectedSize) {
-      // In a real app, show a proper error message
-      alert("Please select a size");
+      showAlert(
+        "Please Select Size",
+        "Please select a size before adding to bag",
+      );
       return;
     }
     try {
@@ -181,7 +199,8 @@ export default function ProductDetails() {
                 key={index}
                 source={{ uri: image }}
                 style={[styles.productImage, { width }]}
-                resizeMode="cover"
+                contentFit="cover"
+                transition={200}
               />
             ))}
           </ScrollView>
@@ -241,7 +260,11 @@ export default function ProductDetails() {
                   key={size}
                   style={[
                     styles.sizeButton,
-                    selectedSize === size && styles.selectedSize,
+                    { borderColor: theme.border },
+                    selectedSize === size && {
+                      borderColor: theme.tint,
+                      backgroundColor: theme.surface, // Or a tint-based surface if supported, but surface is safe
+                    },
                   ]}
                   onPress={() => setSelectedSize(size)}
                 >
@@ -287,6 +310,12 @@ export default function ProductDetails() {
           )}
         </TouchableOpacity>
       </View>
+      <CustomAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        onClose={hideAlert}
+      />
     </View>
   );
 }
@@ -391,14 +420,10 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     borderWidth: 1,
-    borderColor: "#ddd",
     justifyContent: "center",
     alignItems: "center",
   },
-  selectedSize: {
-    borderColor: "#ff3f6c",
-    backgroundColor: "#fff4f4",
-  },
+
   sizeText: {
     fontSize: 16,
     color: "#3e3e3e",

@@ -24,9 +24,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ORDER_STATUSES } from "@/constants/orders";
 import { useFocusEffect } from "expo-router";
 import { useTheme } from "../hooks/useTheme";
-// import * as FileSystem from "expo-file-system";
-// import * as Sharing from "expo-sharing";
-// Note: Uncomment above imports after installing expo-file-system and expo-sharing
+import * as FileSystem from "expo-file-system";
+import * as Sharing from "expo-sharing";
+import * as Print from "expo-print";
+import { CustomAlert } from "@/components/CustomAlert";
 
 // Types
 interface Transaction {
@@ -57,6 +58,21 @@ export default function Transactions() {
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [exportFormat, setExportFormat] = useState<"pdf" | "csv">("pdf");
   const [showExportMenu, setShowExportMenu] = useState(false);
+
+  // Custom Alert State
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    title: "",
+    message: "",
+  });
+
+  const showAlert = (title: string, message: string) => {
+    setAlertConfig({ visible: true, title, message });
+  };
+
+  const hideAlert = () => {
+    setAlertConfig({ ...alertConfig, visible: false });
+  };
 
   // Date range state
   const [dateFrom, setDateFrom] = useState<Date | null>(null);
@@ -113,7 +129,7 @@ export default function Transactions() {
       setTransactions(sorted);
     } catch (error) {
       console.error("Failed to fetch transactions", error);
-      Alert.alert("Error", "Failed to load transactions");
+      showAlert("Error", "Failed to load transactions");
     } finally {
       setIsLoading(false);
     }
@@ -123,7 +139,7 @@ export default function Transactions() {
     if (!user) return;
     try {
       setShowExportMenu(false);
-      Alert.alert(
+      showAlert(
         "Exporting",
         `Preparing ${exportFormat.toUpperCase()} download...`,
       );
@@ -147,34 +163,111 @@ export default function Transactions() {
         link.click();
         link.remove();
       } else {
-        // TODO: Install expo-file-system and expo-sharing for mobile file download
-        // Run: npx expo install expo-file-system expo-sharing
-        // Then uncomment the imports at the top of this file
-        Alert.alert(
-          "Export Ready",
-          "To enable file downloads on mobile, please install expo-file-system and expo-sharing packages.",
-        );
+        const fr = new FileReader();
+        fr.onload = async () => {
+          const base64 =
+            typeof fr.result === "string" ? fr.result.split(",")[1] : "";
+          const fileUri =
+            FileSystem.documentDirectory + `transactions.${exportFormat}`;
+
+          await FileSystem.writeAsStringAsync(fileUri, base64, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+
+          if (await Sharing.isAvailableAsync()) {
+            await Sharing.shareAsync(fileUri);
+          } else {
+            showAlert("Error", "Sharing is not available on this device");
+          }
+        };
+        fr.readAsDataURL(response.data); // response.data is a Blob
       }
 
-      Alert.alert("Success", "Transaction history exported successfully.");
+      showAlert("Success", "Transaction history exported successfully.");
     } catch (error) {
       console.error("Export failed", error);
-      Alert.alert("Error", "Failed to export transactions. Please try again.");
+      showAlert("Error", "Failed to export transactions. Please try again.");
     }
   };
 
   const handleReceiptDownload = async (transactionId: string) => {
     try {
-      Alert.alert("Downloading", "Preparing receipt...");
+      const transaction = transactions.find((t) => t._id === transactionId);
+      if (!transaction) return;
 
-      // In a real implementation, you'd call a backend endpoint for individual receipt
-      // For now, we'll simulate it
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      showAlert("Downloading", "Generating receipt...");
 
-      Alert.alert("Success", "Receipt downloaded successfully.");
+      const html = `
+        <html>
+          <head>
+            <style>
+              body { font-family: 'Helvetica', sans-serif; padding: 20px; color: #333; }
+              .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #ff3f6c; padding-bottom: 20px; }
+              .logo { font-size: 24px; font-weight: bold; color: #ff3f6c; margin-bottom: 10px; }
+              .title { font-size: 18px; color: #666; }
+              .details { margin-bottom: 30px; }
+              .row { display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+              .label { font-weight: bold; color: #666; }
+              .value { text-align: right; }
+              .amount-row { font-size: 18px; font-weight: bold; margin-top: 20px; border-top: 2px solid #333; padding-top: 10px; }
+              .footer { margin-top: 40px; text-align: center; font-size: 12px; color: #999; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <div class="logo">Myntra</div>
+              <div class="title">Transaction Receipt</div>
+            </div>
+            
+            <div class="details">
+              <div class="row">
+                <span class="label">Transaction ID</span>
+                <span class="value">${transaction._id}</span>
+              </div>
+              <div class="row">
+                <span class="label">Date</span>
+                <span class="value">${new Date(transaction.date).toLocaleString()}</span>
+              </div>
+              <div class="row">
+                <span class="label">Type</span>
+                <span class="value">${transaction.type}</span>
+              </div>
+              <div class="row">
+                <span class="label">Payment Mode</span>
+                <span class="value">${transaction.paymentMode}</span>
+              </div>
+               <div class="row">
+                <span class="label">Status</span>
+                <span class="value" style="color: ${getStatusColor(transaction.status)}">${transaction.status}</span>
+              </div>
+              
+              <div class="row amount-row">
+                <span class="label">Amount Paid</span>
+                <span class="value">₹${transaction.amount}</span>
+              </div>
+            </div>
+
+            <div class="footer">
+              <p>Thank you for shopping with us!</p>
+              <p>This is a computer generated receipt and does not require a physical signature.</p>
+            </div>
+          </body>
+        </html>
+      `;
+
+      const { uri } = await Print.printToFileAsync({ html });
+
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri, {
+          UTI: ".pdf",
+          mimeType: "application/pdf",
+        });
+      } else {
+        showAlert("Success", "Receipt saved to " + uri);
+      }
     } catch (error) {
       console.error("Receipt download failed", error);
-      Alert.alert("Error", "Failed to download receipt.");
+      showAlert("Error", "Failed to generate receipt.");
     }
   };
 
@@ -359,6 +452,7 @@ export default function Transactions() {
               key={type}
               style={[
                 styles.filterChip,
+                { backgroundColor: theme.surface }, // Default bg
                 (filterType === type || (type === "All" && !filterType)) &&
                   styles.activeFilter,
               ]}
@@ -524,6 +618,12 @@ export default function Transactions() {
           <View style={{ height: 20 }} />
         </ScrollView>
       )}
+      <CustomAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        onClose={hideAlert}
+      />
     </View>
   );
 }
@@ -558,8 +658,6 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   menuContainer: {
-    backgroundColor: "#fff",
-    marginHorizontal: 15,
     marginTop: 5,
     borderRadius: 10,
     elevation: 3,
@@ -586,7 +684,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: "#f0f0f0",
     marginRight: 10,
     borderWidth: 1,
     borderColor: "transparent",
@@ -615,7 +712,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 15,
-    backgroundColor: "#fff5f7",
     borderWidth: 1,
     borderColor: "#ff3f6c",
   },
@@ -628,7 +724,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 15,
-    backgroundColor: "#f0f0f0",
   },
   clearFilterText: {
     fontSize: 12,

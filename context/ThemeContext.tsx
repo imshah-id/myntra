@@ -1,9 +1,5 @@
 import React, { createContext, useEffect, useState, useContext } from "react";
-import {
-  Appearance,
-  ColorSchemeName,
-  useColorScheme as useDeviceColorScheme,
-} from "react-native";
+import { useColorScheme as useDeviceColorScheme } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AppTheme, Theme } from "../theme";
 
@@ -11,6 +7,7 @@ type ThemeContextType = {
   theme: Theme;
   colorScheme: "light" | "dark";
   toggleTheme: () => void;
+  resetToSystem: () => void; // Optional: verify feature
 };
 
 export const ThemeContext = createContext<ThemeContextType>(
@@ -21,8 +18,9 @@ const THEME_KEY = "APP_THEME";
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const deviceColorScheme = useDeviceColorScheme();
-  const [colorScheme, setColorScheme] = useState<"light" | "dark">(
-    deviceColorScheme === "dark" ? "dark" : "light",
+  // userPreference: 'light' | 'dark' | null (null means follow system)
+  const [userPreference, setUserPreference] = useState<"light" | "dark" | null>(
+    null,
   );
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -31,10 +29,9 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         const storedTheme = await AsyncStorage.getItem(THEME_KEY);
         if (storedTheme === "light" || storedTheme === "dark") {
-          setColorScheme(storedTheme);
-        } else if (deviceColorScheme) {
-          // If no stored preference, align with device
-          setColorScheme(deviceColorScheme);
+          setUserPreference(storedTheme);
+        } else {
+          setUserPreference(null);
         }
       } catch (e) {
         console.warn("Failed to load theme preference", e);
@@ -44,9 +41,12 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     })();
   }, []);
 
+  // Active scheme is user preference OR device default
+  const activeColorScheme = userPreference ?? deviceColorScheme ?? "light";
+
   const toggleTheme = async () => {
-    const nextScheme = colorScheme === "dark" ? "light" : "dark";
-    setColorScheme(nextScheme);
+    const nextScheme = activeColorScheme === "dark" ? "light" : "dark";
+    setUserPreference(nextScheme);
     try {
       await AsyncStorage.setItem(THEME_KEY, nextScheme);
     } catch (e) {
@@ -54,14 +54,30 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const theme = AppTheme[colorScheme];
+  const resetToSystem = async () => {
+    setUserPreference(null);
+    try {
+      await AsyncStorage.removeItem(THEME_KEY);
+    } catch (e) {
+      console.warn("Failed to reset theme", e);
+    }
+  };
+
+  const theme = AppTheme[activeColorScheme];
 
   if (!isLoaded) {
     return null;
   }
 
   return (
-    <ThemeContext.Provider value={{ theme, colorScheme, toggleTheme }}>
+    <ThemeContext.Provider
+      value={{
+        theme,
+        colorScheme: activeColorScheme,
+        toggleTheme,
+        resetToSystem,
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );
