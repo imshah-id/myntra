@@ -128,7 +128,7 @@ export default function Login() {
               {isloading ? (
                 <ActivityIndicator color={theme.background} />
               ) : (
-                <Text style={[styles.buttonText, { color: theme.background }]}>
+                <Text style={[styles.buttonText, { color: theme.tintText }]}>
                   LOGIN
                 </Text>
               )}
@@ -223,6 +223,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: "center",
     marginTop: 10,
+    maxWidth: 175,
+    width: "100%",
+    alignSelf: "center",
   },
   buttonText: {
     color: "#fff",

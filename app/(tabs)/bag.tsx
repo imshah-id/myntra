@@ -276,9 +276,7 @@ export default function Bag() {
           style={[styles.checkoutButton, { backgroundColor: theme.tint }]}
           onPress={() => router.push("/checkout")}
         >
-          <Text
-            style={[styles.checkoutButtonText, { color: theme.background }]}
-          >
+          <Text style={[styles.checkoutButtonText, { color: theme.tintText }]}>
             PLACE ORDER
           </Text>
         </TouchableOpacity>
@@ -403,6 +401,9 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     alignItems: "center",
+    maxWidth: 175,
+    width: "100%",
+    alignSelf: "center",
   },
   checkoutButtonText: {
     color: "#fff",

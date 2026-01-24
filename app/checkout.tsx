@@ -510,7 +510,11 @@ export default function Checkout() {
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.placeOrderButtonText}>PLACE ORDER</Text>
+            <Text
+              style={[styles.placeOrderButtonText, { color: theme.tintText }]}
+            >
+              PLACE ORDER
+            </Text>
           )}
         </TouchableOpacity>
       </View>
@@ -680,6 +684,9 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 10,
     alignItems: "center",
+    maxWidth: 175,
+    width: "100%",
+    alignSelf: "center",
   },
   placeOrderButtonDisabled: {
     backgroundColor: "#ffb3c6",

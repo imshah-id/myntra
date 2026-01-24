@@ -9,4 +9,5 @@ export const DarkTheme = {
   tabIconSelected: Palette.tintDark,
   surface: Palette.gray900,
   border: "#2C2C2C",
+  tintText: "#FFFFFF",
 };

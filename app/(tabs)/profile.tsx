@@ -143,7 +143,9 @@ export default function Profile() {
           onPress={handleLogout}
         >
           <LogOut size={24} color="#fff" />
-          <Text style={styles.logoutText}>Logout</Text>
+          <Text style={[styles.logoutText, { color: theme.tintText }]}>
+            Logout
+          </Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -239,6 +241,9 @@ const styles = StyleSheet.create({
     marginHorizontal: 15,
     borderRadius: 10,
     borderWidth: 1,
+    maxWidth: 175,
+    width: "100%",
+    alignSelf: "center",
   },
   logoutText: {
     marginLeft: 10,

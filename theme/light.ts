@@ -9,4 +9,5 @@ export const LightTheme = {
   tabIconSelected: Palette.tintLight,
   surface: "#F5F5F5",
   border: "#E5E5E5",
+  tintText: "#FFFFFF",
 };

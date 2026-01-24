@@ -305,7 +305,9 @@ export default function ProductDetails() {
           ) : (
             <>
               <ShoppingBag size={20} color="#fff" />
-              <Text style={styles.addToBagText}>ADD TO BAG</Text>
+              <Text style={[styles.addToBagText, { color: theme.tintText }]}>
+                ADD TO BAG
+              </Text>
             </>
           )}
         </TouchableOpacity>
@@ -445,6 +447,9 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     gap: 10,
+    maxWidth: 175,
+    width: "100%",
+    alignSelf: "center",
   },
   addToBagText: {
     color: "#fff",

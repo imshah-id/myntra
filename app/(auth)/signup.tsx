@@ -199,7 +199,7 @@ export default function Signup() {
           {isloading ? (
             <ActivityIndicator color={theme.background} />
           ) : (
-            <Text style={[styles.buttonText, { color: theme.background }]}>
+            <Text style={[styles.buttonText, { color: theme.tintText }]}>
               SIGN UP
             </Text>
           )}
@@ -298,6 +298,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: "center",
     marginTop: 20,
+    maxWidth: 175,
+    width: "100%",
+    alignSelf: "center",
   },
   buttonText: {
     color: "#fff",

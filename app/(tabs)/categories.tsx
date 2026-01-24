@@ -27,6 +27,7 @@ import { useTheme } from "@/hooks/useTheme";
 export default function TabTwoScreen() {
   const router = useRouter();
   const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(
@@ -135,7 +136,6 @@ export default function TabTwoScreen() {
       </TouchableOpacity>
     ));
   };
-  const insets = useSafeAreaInsets();
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View
